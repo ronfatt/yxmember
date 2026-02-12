@@ -14,7 +14,7 @@ export default function HomePage() {
               A calm membership journey for growth, learning, and resonance.
             </h1>
             <p className="text-lg text-black/70">
-              Join courses, book mentors, and reserve tuning rooms. Pay securely with Stripe, and manage everything in one place.
+              Join courses, book mentors, and reserve tuning rooms. Complete payment by bank transfer and upload your slip in dashboard.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/courses" className="rounded-full bg-ink px-6 py-3 text-white">
@@ -28,8 +28,9 @@ export default function HomePage() {
           <div className="card space-y-4">
             <h2 className="section-title">Member Highlights</h2>
             <ul className="space-y-3 text-black/70">
-              <li>Magic link login with Supabase Auth.</li>
-              <li>Stripe Checkout for courses, deposits, and room bookings.</li>
+              <li>Email login with 6-digit password.</li>
+              <li>Free registration flow for new members.</li>
+              <li>Bank transfer orders with slip upload and manual review.</li>
               <li>Admin console to manage offerings and approvals.</li>
             </ul>
           </div>

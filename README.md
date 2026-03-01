@@ -35,6 +35,7 @@ Run the Supabase SQL migrations in order:
 3. [`supabase/migrations/0003_mentor_booking_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0003_mentor_booking_mvp.sql)
 4. [`supabase/migrations/0004_frequency_rituals.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0004_frequency_rituals.sql)
 5. [`supabase/migrations/0005_admin_accounts_and_stock.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0005_admin_accounts_and_stock.sql)
+6. [`supabase/migrations/0006_stock_movements.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0006_stock_movements.sql)
 
 `0002_metaenergy_mvp.sql` adds:
 
@@ -197,6 +198,7 @@ The admin backend also supports:
   - choose which accounts are active for member-facing transfer instructions
 - `/admin/products`
   - manage product SKU, MYR price, stock count, inventory tracking, and preorder allowance
+  - record stock movements such as stock-in, stock-out, and stocktake adjustments
 
 Member/public display:
 

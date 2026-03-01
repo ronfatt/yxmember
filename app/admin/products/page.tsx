@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
@@ -56,10 +57,78 @@ async function updateStock(formData: FormData) {
   revalidatePath("/products");
 }
 
+async function addStockMovement(formData: FormData) {
+  "use server";
+  const adminUser = await requireAdmin();
+  const admin = supabaseAdmin();
+  const productId = String(formData.get("product_id"));
+  const movementType = String(formData.get("movement_type"));
+  const rawQuantity = Number(formData.get("quantity") || 0);
+  const note = String(formData.get("note") || "") || null;
+
+  const { data: product } = await admin
+    .from("products")
+    .select("id,stock_on_hand")
+    .eq("id", productId)
+    .single();
+
+  if (!product) {
+    return;
+  }
+
+  let nextStock = Number(product.stock_on_hand ?? 0);
+  const quantity = Math.abs(Math.trunc(rawQuantity));
+
+  if (!quantity) {
+    return;
+  }
+
+  if (movementType === "in") {
+    nextStock += quantity;
+  } else if (movementType === "out") {
+    nextStock = Math.max(0, nextStock - quantity);
+  } else {
+    nextStock = quantity;
+  }
+
+  await admin.from("stock_movements").insert({
+    product_id: productId,
+    movement_type: movementType,
+    quantity,
+    note,
+    created_by: adminUser.id
+  });
+
+  await admin
+    .from("products")
+    .update({
+      stock_on_hand: nextStock,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", productId);
+
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+}
+
 export default async function AdminProductsPage() {
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
-  const { data: products } = await admin.from("products").select("*").order("created_at", { ascending: false });
+  const [{ data: products }, { data: movements }] = await Promise.all([
+    admin.from("products").select("*").order("created_at", { ascending: false }),
+    admin
+      .from("stock_movements")
+      .select("id,product_id,movement_type,quantity,note,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100)
+  ]);
+
+  const movementsByProduct = new Map<string, typeof movements>();
+  (movements ?? []).forEach((movement) => {
+    const list = movementsByProduct.get(movement.product_id) ?? [];
+    list.push(movement);
+    movementsByProduct.set(movement.product_id, list);
+  });
 
   return (
     <div className="space-y-6">
@@ -117,6 +186,53 @@ export default async function AdminProductsPage() {
                   </select>
                   <button className="rounded-full bg-[#123524] px-4 py-2 text-sm text-white md:justify-self-start">{t(language, { zh: "更新库存资料", en: "Update stock details" })}</button>
                 </form>
+
+                <div className="space-y-3 border-t border-black/10 pt-4">
+                  <div className="space-y-1">
+                    <p className="font-medium text-[#123524]">{t(language, { zh: "库存流水", en: "Stock movement" })}</p>
+                    <p className="text-xs text-black/50">{t(language, { zh: "记录进货、扣减或盘点调整，系统会自动回写当前库存。", en: "Log incoming stock, deductions, or stocktakes. Current stock will be updated automatically." })}</p>
+                  </div>
+
+                  <form action={addStockMovement} className="grid gap-3 md:grid-cols-[0.9fr,0.8fr,1fr,auto]">
+                    <input type="hidden" name="product_id" value={product.id} />
+                    <select name="movement_type" className="rounded border p-2 text-sm" defaultValue="in">
+                      <option value="in">{t(language, { zh: "入库", en: "Stock in" })}</option>
+                      <option value="out">{t(language, { zh: "扣减", en: "Stock out" })}</option>
+                      <option value="adjust">{t(language, { zh: "盘点调整", en: "Set stock" })}</option>
+                    </select>
+                    <input className="rounded border p-2" name="quantity" type="number" min="1" placeholder={t(language, { zh: "数量", en: "Quantity" })} required />
+                    <input className="rounded border p-2" name="note" placeholder={t(language, { zh: "备注，例如：到货 / 损耗 / 样品", en: "Note, e.g. delivery / damage / sample" })} />
+                    <button className="rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524]">
+                      {t(language, { zh: "记录", en: "Log" })}
+                    </button>
+                  </form>
+
+                  {movementsByProduct.get(product.id)?.length ? (
+                    <div className="space-y-2">
+                      {movementsByProduct.get(product.id)!.slice(0, 5).map((movement) => (
+                        <div key={movement.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/8 bg-[#faf7f0] px-4 py-3 text-sm">
+                          <div>
+                            <p className="font-medium text-[#123524]">
+                              {movement.movement_type === "in"
+                                ? t(language, { zh: "入库", en: "Stock in" })
+                                : movement.movement_type === "out"
+                                  ? t(language, { zh: "扣减", en: "Stock out" })
+                                  : t(language, { zh: "盘点调整", en: "Set stock" })}
+                              {" · "}
+                              {movement.quantity}
+                            </p>
+                            <p className="text-xs text-black/50">{movement.note || t(language, { zh: "没有备注", en: "No note" })}</p>
+                          </div>
+                          <p className="text-xs text-black/45">
+                            {new Date(movement.created_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-black/55">{t(language, { zh: "还没有库存流水。", en: "No stock movements yet." })}</p>
+                  )}
+                </div>
               </div>
             ))
           ) : (

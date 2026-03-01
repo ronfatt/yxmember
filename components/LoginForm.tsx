@@ -28,42 +28,64 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="card mx-auto max-w-lg space-y-4">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-jade">Member access</p>
-        <h1 className="font-display text-4xl text-[#123524]">Login</h1>
-        <p className="text-sm text-black/65">Email and password via Supabase Auth.</p>
-      </div>
-      <div className="space-y-3">
-        <input
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-        <input
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-      </div>
-      <button
-        type="button"
-        disabled={loading}
-        onClick={handleSubmit}
-        className="rounded-full bg-[#123524] px-6 py-3 text-sm font-semibold text-white"
+    <div className="w-full max-w-md rounded-[30px] border border-[rgba(201,162,39,0.35)] bg-white/75 p-8 shadow-[0_22px_70px_rgba(0,0,0,0.10)] backdrop-blur-xl">
+      <div className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]/80">MEMBER LOGIN</div>
+      <div className="mt-2 font-display text-4xl text-[#0f2f24]">歡迎回來</div>
+      <div className="mt-2 text-sm leading-6 text-black/68">請使用 Email 與密碼登入你的 MetaEnergy 會員中心。</div>
+
+      <form
+        className="mt-7 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSubmit();
+        }}
       >
-        {loading ? "Signing in..." : "Login"}
-      </button>
-      <p className="text-sm text-black/60">
-        Need an account?{" "}
-        <Link href="/register" className="text-jade underline">
-          Register here
-        </Link>
-      </p>
+        <label className="block">
+          <span className="text-xs font-medium text-[#0f2f24]/80">Email</span>
+          <div className="mt-2 rounded-[20px] border border-[rgba(201,162,39,0.25)] bg-[#fbf8f1] transition focus-within:border-[rgba(201,162,39,0.55)] focus-within:ring-4 focus-within:ring-[rgba(201,162,39,0.18)]">
+            <input
+              className="w-full bg-transparent px-4 py-3.5 text-[#0f2f24] outline-none"
+              type="email"
+              placeholder="you@email.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-medium text-[#0f2f24]/80">Password</span>
+          <div className="mt-2 rounded-[20px] border border-[rgba(201,162,39,0.25)] bg-[#fbf8f1] transition focus-within:border-[rgba(201,162,39,0.55)] focus-within:ring-4 focus-within:ring-[rgba(201,162,39,0.18)]">
+            <input
+              className="w-full bg-transparent px-4 py-3.5 text-[#0f2f24] outline-none"
+              type="password"
+              placeholder="••••••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </div>
+        </label>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-[20px] bg-[linear-gradient(135deg,#e6cc73,#c9a227,#b4881b)] py-3.5 text-sm font-semibold text-[#0f2f24] shadow-[0_14px_30px_rgba(201,162,39,0.25)] transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {loading ? "Signing in..." : "Login"}
+        </button>
+
+        <div className="flex items-center justify-between gap-4 pt-1 text-sm">
+          <Link href="/register" className="text-[#0f2f24]/75 underline underline-offset-4 hover:text-[#0f2f24]">
+            免費註冊
+          </Link>
+          <span className="text-black/45">Secure email login</span>
+        </div>
+      </form>
+
+      <div className="mt-6 rounded-[22px] border border-[rgba(15,47,36,0.08)] bg-[#0f2f24]/5 p-4">
+        <div className="text-xs font-semibold text-[#0f2f24]">今日公告</div>
+        <div className="mt-1 text-xs leading-5 text-black/65">登入後可查看本月活動、產品上新與會員專屬福利。</div>
+      </div>
     </div>
   );
 }

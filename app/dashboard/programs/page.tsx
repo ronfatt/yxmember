@@ -5,6 +5,7 @@ import OrderSlipUpload from "../../../components/OrderSlipUpload";
 import { requireUser } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
+import { buildFallbackPaymentAccount, getActivePaymentAccounts } from "../../../lib/metaenergy/payment-accounts";
 import { createClient } from "../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +21,8 @@ export default async function DashboardProgramsPage() {
   const user = await requireUser();
   const language = getCurrentLanguage();
   const supabase = createClient();
-  const bankAccountName = process.env.BANK_ACCOUNT_NAME?.trim();
-  const bankAccountNumber = process.env.BANK_ACCOUNT_NUMBER?.trim();
-  const bankBankName = process.env.BANK_BANK_NAME?.trim();
-  const bankTransferNote = process.env.BANK_TRANSFER_NOTE?.trim();
 
-  const [{ data: courses }, { data: sessions }, { data: orders }] = await Promise.all([
+  const [{ data: courses }, { data: sessions }, { data: orders }, activeAccounts] = await Promise.all([
     supabase
       .from("courses")
       .select("id,title,tagline,level,location_text,is_published")
@@ -41,8 +38,10 @@ export default async function DashboardProgramsPage() {
       .select("id,order_type,amount_total,amount_cents,currency,payment_status,slip_url,course_session_id,created_at")
       .eq("user_id", user.id)
       .eq("order_type", "COURSE")
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false }),
+    getActivePaymentAccounts(supabase)
   ]);
+  const accounts = activeAccounts.length ? activeAccounts : (buildFallbackPaymentAccount() ? [buildFallbackPaymentAccount()!] : []);
 
   const sessionsByCourse = new Map<string, typeof sessions>();
   (sessions ?? []).forEach((session) => {
@@ -150,12 +149,17 @@ export default async function DashboardProgramsPage() {
                 en: "For paid programs, transfer using the details below and then upload your slip underneath."
               })}
             </p>
-            {bankAccountName || bankAccountNumber || bankBankName ? (
+            {accounts.length ? (
               <div className="space-y-3">
-                {bankBankName ? <CopyField label={t(language, { zh: "银行", en: "Bank" })} value={bankBankName} language={language} /> : null}
-                {bankAccountName ? <CopyField label={t(language, { zh: "账户名称", en: "Account name" })} value={bankAccountName} language={language} /> : null}
-                {bankAccountNumber ? <CopyField label={t(language, { zh: "账号", en: "Account number" })} value={bankAccountNumber} language={language} /> : null}
-                {bankTransferNote ? <CopyField label={t(language, { zh: "备注", en: "Reference" })} value={bankTransferNote} language={language} /> : null}
+                {accounts.map((account) => (
+                  <div key={account.id} className="space-y-3 rounded-3xl border border-black/8 bg-[#fbf7ef] p-4">
+                    <p className="font-display text-xl text-[#123524]">{account.label}</p>
+                    <CopyField label={t(language, { zh: "银行", en: "Bank" })} value={account.bank_name} language={language} />
+                    <CopyField label={t(language, { zh: "账户名称", en: "Account name" })} value={account.account_name} language={language} />
+                    <CopyField label={t(language, { zh: "账号", en: "Account number" })} value={account.account_number} language={language} />
+                    {account.reference_note ? <CopyField label={t(language, { zh: "备注", en: "Reference" })} value={account.reference_note} language={language} /> : null}
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-sm text-[#8c3a1f]">

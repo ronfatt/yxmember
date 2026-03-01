@@ -33,6 +33,8 @@ Run the Supabase SQL migrations in order:
 1. [`supabase/migrations/0001_init.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0001_init.sql)
 2. [`supabase/migrations/0002_metaenergy_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0002_metaenergy_mvp.sql)
 3. [`supabase/migrations/0003_mentor_booking_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0003_mentor_booking_mvp.sql)
+4. [`supabase/migrations/0004_frequency_rituals.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0004_frequency_rituals.sql)
+5. [`supabase/migrations/0005_admin_accounts_and_stock.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0005_admin_accounts_and_stock.sql)
 
 `0002_metaenergy_mvp.sql` adds:
 
@@ -123,6 +125,8 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/admin/mentors`
 - `/admin/orders`
 - `/admin/courses`
+- `/admin/accounts`
+- `/admin/products`
 
 ## Mentor booking MVP
 
@@ -183,6 +187,24 @@ Email notes:
   - paid reservation instructions
   - transfer-approved confirmations
 - If those env vars are omitted, the enrollment flow still works and email sending is skipped safely.
+
+## Admin accounts and stock
+
+The admin backend also supports:
+
+- `/admin/accounts`
+  - manage bank transfer accounts in the database
+  - choose which accounts are active for member-facing transfer instructions
+- `/admin/products`
+  - manage product SKU, MYR price, stock count, inventory tracking, and preorder allowance
+
+Member/public display:
+
+- `/dashboard/programs`
+  - prefers active `payment_accounts` from the database
+  - falls back to `BANK_*` env vars only if no active account exists
+- `/products`
+  - shows inventory state such as in stock, preorder, or out of stock
 
 ## Vercel deployment
 

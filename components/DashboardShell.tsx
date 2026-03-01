@@ -1,10 +1,12 @@
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { createClient } from "../lib/supabase/server";
+import { getAdminStatus } from "../lib/actions/session";
 import { t } from "../lib/i18n/shared";
 import { getCurrentLanguage } from "../lib/i18n/server";
 
-export default function DashboardShell({
+export default async function DashboardShell({
   title,
   subtitle,
   children
@@ -14,6 +16,11 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const language = getCurrentLanguage();
+  const supabase = createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const isAdmin = await getAdminStatus(user?.id, user?.email);
   const links = [
     { href: "/dashboard", label: t(language, { zh: "总览", en: "Overview" }) },
     { href: "/dashboard/referrals", label: t(language, { zh: "引荐", en: "Referrals" }) },
@@ -44,6 +51,14 @@ export default function DashboardShell({
                 {link.label}
               </Link>
             ))}
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                className="rounded-full border border-[#c8a55c]/30 bg-[linear-gradient(135deg,_#fff7e5,_#f4e4bc)] px-4 py-2 font-semibold text-[#6a4d14] shadow-[0_10px_24px_rgba(200,165,92,0.15)] hover:brightness-105"
+              >
+                {t(language, { zh: "后台入口", en: "Admin Portal" })}
+              </Link>
+            ) : null}
             <LogoutButton language={language} />
           </div>
         </div>

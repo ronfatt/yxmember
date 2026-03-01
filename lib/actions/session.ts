@@ -33,3 +33,32 @@ export async function requireAdmin() {
   }
   return auth.user;
 }
+
+export async function getAdminStatus(userId?: string | null, email?: string | null) {
+  const supabase = createClient();
+
+  if (isAdminEmail(email)) {
+    return true;
+  }
+
+  if (!userId) {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      return false;
+    }
+
+    if (isAdminEmail(auth.user.email)) {
+      return true;
+    }
+
+    userId = auth.user.id;
+  }
+
+  const { data: role } = await supabase
+    .from("admin_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .single();
+
+  return !!role && ["ADMIN", "STAFF"].includes(role.role);
+}

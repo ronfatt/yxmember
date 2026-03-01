@@ -19,6 +19,8 @@ export default function AdminOrderForm({ users }: { users: UserOption[] }) {
   const [orderType, setOrderType] = useState<"personal" | "service" | "product">("product");
   const [source, setSource] = useState<"personal" | "referred">("personal");
   const [referrerId, setReferrerId] = useState("");
+  const selectedUser = users.find((user) => user.id === userId);
+  const selectedReferrer = users.find((user) => user.id === referrerId);
 
   const handleSubmit = async () => {
     const payload = {
@@ -49,67 +51,96 @@ export default function AdminOrderForm({ users }: { users: UserOption[] }) {
   return (
     <div className="space-y-3">
       <div className="grid gap-3 lg:grid-cols-2">
-        <select
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3"
-          value={userId}
-          onChange={(event) => setUserId(event.target.value)}
-        >
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.name ?? "Member"} ({user.referral_code})
-            </option>
-          ))}
-        </select>
-        <input
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3"
-          type="number"
-          min="0"
-          step="0.01"
-          value={amountTotal}
-          onChange={(event) => setAmountTotal(event.target.value)}
-          placeholder="Amount total"
-        />
-        <input
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3"
-          type="number"
-          min="0"
-          value={pointsRedeemed}
-          onChange={(event) => setPointsRedeemed(event.target.value)}
-          placeholder="Points redeemed"
-        />
-        <select
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3"
-          value={orderType}
-          onChange={(event) => setOrderType(event.target.value as "personal" | "service" | "product")}
-        >
-          <option value="personal">personal</option>
-          <option value="service">service</option>
-          <option value="product">product</option>
-        </select>
-        <select
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3"
-          value={source}
-          onChange={(event) => setSource(event.target.value as "personal" | "referred")}
-        >
-          <option value="personal">personal</option>
-          <option value="referred">referred</option>
-        </select>
-        {source === "referred" ? (
+        <label className="space-y-2 text-sm">
+          <span className="font-medium text-black/65">Buyer</span>
           <select
-            className="rounded-2xl border border-black/10 bg-white px-4 py-3"
-            value={referrerId}
-            onChange={(event) => setReferrerId(event.target.value)}
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            value={userId}
+            onChange={(event) => setUserId(event.target.value)}
           >
-            <option value="">Select referrer</option>
-            {users
-              .filter((user) => user.id !== userId)
-              .map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name ?? "Member"} ({user.referral_code})
-                </option>
-              ))}
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name ?? "Member"} ({user.referral_code})
+              </option>
+            ))}
           </select>
+        </label>
+        <label className="space-y-2 text-sm">
+          <span className="font-medium text-black/65">Amount total (RM)</span>
+          <input
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            type="number"
+            min="0"
+            step="0.01"
+            value={amountTotal}
+            onChange={(event) => setAmountTotal(event.target.value)}
+            placeholder="Amount total"
+          />
+        </label>
+        <label className="space-y-2 text-sm">
+          <span className="font-medium text-black/65">Points redeemed</span>
+          <input
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            type="number"
+            min="0"
+            value={pointsRedeemed}
+            onChange={(event) => setPointsRedeemed(event.target.value)}
+            placeholder="Points redeemed"
+          />
+        </label>
+        <label className="space-y-2 text-sm">
+          <span className="font-medium text-black/65">Order type</span>
+          <select
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            value={orderType}
+            onChange={(event) => setOrderType(event.target.value as "personal" | "service" | "product")}
+          >
+            <option value="personal">personal</option>
+            <option value="service">service</option>
+            <option value="product">product</option>
+          </select>
+        </label>
+        <label className="space-y-2 text-sm">
+          <span className="font-medium text-black/65">Order source</span>
+          <select
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            value={source}
+            onChange={(event) => setSource(event.target.value as "personal" | "referred")}
+          >
+            <option value="personal">personal</option>
+            <option value="referred">referred</option>
+          </select>
+        </label>
+        {source === "referred" ? (
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-black/65">Referrer</span>
+            <select
+              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+              value={referrerId}
+              onChange={(event) => setReferrerId(event.target.value)}
+            >
+              <option value="">Select referrer</option>
+              {users
+                .filter((user) => user.id !== userId)
+                .map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name ?? "Member"} ({user.referral_code})
+                  </option>
+                ))}
+            </select>
+          </label>
         ) : null}
+      </div>
+      <div className="rounded-2xl border border-black/10 bg-[#f8f6f2] px-4 py-3 text-sm text-black/65">
+        Buyer: <span className="font-medium text-[#123524]">{selectedUser?.name ?? "Member"} ({selectedUser?.referral_code ?? "-"})</span>.
+        {source === "referred" ? (
+          <>
+            {" "}Referrer: <span className="font-medium text-[#123524]">{selectedReferrer?.name ?? "Not selected"} ({selectedReferrer?.referral_code ?? "-"})</span>.
+            {" "}The threshold-crossing order still uses the previous tier.
+          </>
+        ) : (
+          <> This will be stored as a direct buyer order without referral commission.</>
+        )}
       </div>
       <button
         type="button"

@@ -4,6 +4,7 @@ import FrequencyGenerator from "../../components/FrequencyGenerator";
 import ReminderGenerator from "../../components/ReminderGenerator";
 import { requireUser } from "../../lib/actions/session";
 import { buildKeepAliveLabel, buildPointsHint, buildSpendSummary, buildTierHint } from "../../lib/metaenergy/dashboard";
+import type { FrequencyReport, WeeklyReminder } from "../../lib/metaenergy/frequency";
 import { formatMoney, formatPercent } from "../../lib/metaenergy/helpers";
 import { createClient } from "../../lib/supabase/server";
 
@@ -62,9 +63,16 @@ export default async function DashboardPage() {
         .maybeSingle()
     ]);
 
-  const frequency = latestReport?.report_json as
-    | { summary?: string; strengths?: string[]; watchouts?: string[] }
-    | undefined;
+  const frequency = latestReport?.report_json as FrequencyReport | undefined;
+  const weeklyReminder = latestReminder?.content
+    ? (() => {
+        try {
+          return JSON.parse(latestReminder.content) as WeeklyReminder;
+        } catch {
+          return null;
+        }
+      })()
+    : null;
 
   return (
     <DashboardShell title={`Welcome${profile?.name ? `, ${profile.name}` : ""}`} subtitle="Referral + points overview">
@@ -109,11 +117,14 @@ export default async function DashboardPage() {
             <FrequencyGenerator birthday={profile?.birthday ?? null} />
           </div>
           <p className="text-sm text-black/70">{frequency?.summary ?? "No report generated yet."}</p>
-          {frequency?.strengths?.length ? (
-            <p className="text-sm text-black/60">Strengths: {frequency.strengths.join(", ")}.</p>
+          {frequency?.mantra ? (
+            <p className="text-sm text-black/60">Mantra: {frequency.mantra}</p>
+          ) : null}
+          {frequency?.actionPlan?.length ? (
+            <p className="text-sm text-black/60">Action plan: {frequency.actionPlan.slice(0, 2).join(" | ")}.</p>
           ) : null}
           {frequency?.watchouts?.length ? (
-            <p className="text-sm text-black/60">Watchouts: {frequency.watchouts.join(", ")}.</p>
+            <p className="text-sm text-black/60">Watchouts: {frequency.watchouts.slice(0, 2).join(", ")}.</p>
           ) : null}
         </div>
         <div className="card space-y-4 lg:col-span-3">
@@ -124,7 +135,21 @@ export default async function DashboardPage() {
             </div>
             <ReminderGenerator />
           </div>
-          <p className="text-sm text-black/70">{latestReminder?.content ?? "No reminder generated for this week yet."}</p>
+          {weeklyReminder ? (
+            <div className="grid gap-3 lg:grid-cols-[1.2fr,1fr]">
+              <div>
+                <p className="text-sm font-medium text-[#123524]">{weeklyReminder.headline}</p>
+                <p className="mt-1 text-sm text-black/70">{weeklyReminder.focusTheme}</p>
+              </div>
+              <div className="text-sm text-black/60">
+                <p>Priorities: {weeklyReminder.priorityList.join(" | ")}</p>
+                <p className="mt-1">Boundary: {weeklyReminder.boundaryNote}</p>
+                <p className="mt-1">Reflection: {weeklyReminder.reflectionPrompt}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-black/70">{latestReminder?.content ?? "No reminder generated for this week yet."}</p>
+          )}
         </div>
       </div>
     </DashboardShell>

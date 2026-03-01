@@ -26,7 +26,7 @@ export async function POST() {
       {
         user_id: user.id,
         week_start: reminder.weekStart,
-        content: reminder.content
+        content: JSON.stringify(reminder)
       },
       { onConflict: "user_id,week_start" }
     );

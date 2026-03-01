@@ -14,7 +14,7 @@ export default async function PointsDashboardPage() {
     supabase.from("users_profile").select("points_balance").eq("id", user.id).single(),
     supabase
       .from("points_ledger")
-      .select("id,points,action,note,created_at")
+      .select("id,points,action,note,order_id,created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20)
@@ -39,6 +39,7 @@ export default async function PointsDashboardPage() {
                   <p className={entry.points >= 0 ? "text-jade" : "text-[#8c3a1f]"}>{entry.points} pts</p>
                 </div>
                 <p className="mt-1 text-black/60">{entry.note ?? "No note"}.</p>
+                {entry.order_id ? <p className="mt-1 break-all text-black/45">Order ID: {entry.order_id}</p> : null}
                 <p className="mt-1 text-black/45">{new Date(entry.created_at).toLocaleString("en-MY")}</p>
               </div>
             ))

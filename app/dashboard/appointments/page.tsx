@@ -1,3 +1,4 @@
+import Link from "next/link";
 import DashboardShell from "../../../components/DashboardShell";
 import { requireUser } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
@@ -52,8 +53,18 @@ export default async function DashboardAppointmentsPage() {
             </div>
           ))
         ) : (
-          <div className="card text-sm text-black/60">
-            {t(language, { zh: "你还没有会谈预约。先到导师页选择一位导师。", en: "You have no mentor appointments yet. Start from the mentors page." })}
+          <div className="card space-y-4 text-sm text-black/60">
+            <p>
+              {t(language, { zh: "你还没有会谈预约。可以先进入导师页，选择一位导师与会谈时间。", en: "You have no mentor appointments yet. Start by choosing a mentor and a time slot." })}
+            </p>
+            <div>
+              <Link
+                href="/mentors"
+                className="inline-flex rounded-full bg-jade px-4 py-2 text-sm font-semibold text-white"
+              >
+                {t(language, { zh: "前往导师页", en: "Browse mentors" })}
+              </Link>
+            </div>
           </div>
         )}
       </div>

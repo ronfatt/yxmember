@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { Language } from "../lib/i18n/shared";
+import { normalizeBirthday } from "../lib/metaenergy/birthday";
 
 export default function FrequencyGenerator({
   birthday,
@@ -13,14 +14,20 @@ export default function FrequencyGenerator({
   language: Language;
 }) {
   const router = useRouter();
-  const [value, setValue] = useState(birthday ?? "");
+  const [value, setValue] = useState(normalizeBirthday(birthday));
   const [isPending, startTransition] = useTransition();
 
   const handleGenerate = async () => {
+    const safeBirthday = normalizeBirthday(value);
+    if (!safeBirthday) {
+      toast.error(language === "en" ? "Please choose a valid birthday." : "请选择正确的生日。");
+      return;
+    }
+
     const response = await fetch("/api/frequency/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ birthday: value })
+      body: JSON.stringify({ birthday: safeBirthday })
     });
 
     const data = await response.json();
@@ -39,7 +46,7 @@ export default function FrequencyGenerator({
         className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
         type="date"
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => setValue(normalizeBirthday(event.target.value))}
       />
       <button
         type="button"

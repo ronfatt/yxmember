@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { createClient } from "../lib/supabase/client";
 import type { Language } from "../lib/i18n/shared";
+import { normalizeBirthday } from "../lib/metaenergy/birthday";
 
 function getReferralCodeFromCookie() {
   if (typeof document === "undefined") return "";
@@ -35,13 +36,14 @@ export default function RegisterForm({ language }: { language: Language }) {
     try {
       setLoading(true);
       const supabase = createClient();
+      const safeBirthday = normalizeBirthday(birthday);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
-            birthday,
+            birthday: safeBirthday || null,
             referred_code: referralCode || null
           }
         }
@@ -111,7 +113,7 @@ export default function RegisterForm({ language }: { language: Language }) {
               className="w-full bg-transparent px-5 py-4 text-[#0f2f24] outline-none"
               type="date"
               value={birthday}
-              onChange={(event) => setBirthday(event.target.value)}
+              onChange={(event) => setBirthday(normalizeBirthday(event.target.value))}
             />
           </div>
         </label>

@@ -14,6 +14,7 @@ import {
   type FrequencyReport,
   type WeeklyReminder
 } from "../../../lib/metaenergy/frequency";
+import { normalizeBirthday } from "../../../lib/metaenergy/birthday";
 import { createClient } from "../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +87,7 @@ export default async function FrequencyDashboardPage() {
         <section className="space-y-6 text-center">
           <div className="space-y-3">
             <p className="text-sm tracking-[0.28em] text-[#8d7240]">
-              {frequency?.birthday ? frequency.birthday.replaceAll("-", " · ") : profile?.birthday?.replaceAll("-", " · ") ?? "—"}
+              {normalizeBirthday(frequency?.birthday ?? profile?.birthday ?? "").replaceAll("-", " · ") || "—"}
             </p>
             <div className="mx-auto h-px w-24 bg-[linear-gradient(135deg,#c8a55c,#e6c88f)]" />
             <p className="text-sm text-black/60">

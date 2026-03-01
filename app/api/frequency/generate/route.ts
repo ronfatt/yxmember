@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "../../../../lib/actions/session";
+import { normalizeBirthday } from "../../../../lib/metaenergy/birthday";
 import { buildFrequencyReport } from "../../../../lib/metaenergy/frequency";
 import { getCurrentLanguage } from "../../../../lib/i18n/server";
 import { createClient } from "../../../../lib/supabase/server";
@@ -17,11 +18,11 @@ export async function POST(request: Request) {
       .eq("id", user.id)
       .single();
 
-    const birthday = String(payload.birthday ?? profile?.birthday ?? "");
+    const birthday = normalizeBirthday(String(payload.birthday ?? profile?.birthday ?? ""));
 
     if (!birthday) {
       return NextResponse.json(
-        { ok: false, error: language === "en" ? "Birthday is required." : "请先填写生日。" },
+        { ok: false, error: language === "en" ? "A valid birthday is required." : "请先填写正确的生日。" },
         { status: 400 }
       );
     }

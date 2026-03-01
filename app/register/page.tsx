@@ -17,25 +17,25 @@ export default function RegisterPage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(201,162,39,0.35)] bg-white/65 px-4 py-2 backdrop-blur">
               <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">元象能量会员系统</span>
               <span className="h-1 w-1 rounded-full bg-[#c9a227]" />
-              <span className="text-xs text-black/60">Free Membership</span>
+              <span className="text-xs text-black/60">Member Registration</span>
             </div>
 
             <h1 className="mt-6 font-display text-4xl leading-tight text-[#0f2f24] md:text-5xl">
-              建立你的會員帳號
+              开启你的会员旅程
               <span className="mt-3 block text-2xl font-medium text-black/75 md:text-3xl">
-                先加入，再開啟引薦、積分與個人頻率工具
+                在更安定的节奏里，开始累积你的参与与回响
               </span>
             </h1>
 
             <p className="mt-5 max-w-xl text-base leading-7 text-black/68">
-              註冊後即可建立個人頻率檔案、接收每週提醒、查看活動內容，並在符合條件後累積會員獎勵與推薦進度。
+              加入之后，你将拥有属于自己的会员空间。这里会记录你的频率档案、专属提醒、参与轨迹与逐步展开的会员礼遇。
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
-                { title: "免費開始", detail: "Email 註冊即可開通會員檔案" },
-                { title: "推薦自動綁定", detail: "帶推薦碼註冊會自動掛上上線" },
-                { title: "內容持續更新", detail: "活動、提醒、報告集中查看" },
+                { title: "轻松加入", detail: "使用 Email 即可建立你的专属会员档案" },
+                { title: "关系自动绑定", detail: "带推荐码注册时，系统会自动挂上引荐关系" },
+                { title: "内容持续更新", detail: "活动、提醒与报告都会集中留在这里" },
               ].map((item) => (
                 <div
                   key={item.title}

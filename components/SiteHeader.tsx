@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/dashboard/referrals", label: "Referrals" },
-  { href: "/dashboard/points", label: "Points" },
-  { href: "/admin/orders", label: "Admin" },
+  { href: "/dashboard", label: "会员中心" },
+  { href: "/dashboard/referrals", label: "引荐进度" },
+  { href: "/dashboard/points", label: "积分" },
+  { href: "/admin/orders", label: "后台" },
 ];
 
 export default function SiteHeader() {
@@ -21,7 +21,7 @@ export default function SiteHeader() {
             </Link>
           ))}
           <Link href="/login" className="rounded-full bg-[#123524] px-4 py-2 text-white">
-            Member Login
+            会员登入
           </Link>
         </nav>
       </div>

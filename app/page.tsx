@@ -118,6 +118,11 @@ export default function HomePage() {
       })
     }
   ];
+  const previewLabel = t(language, { zh: "Preview UI", en: "Preview UI" });
+  const previewNotice = t(language, {
+    zh: "仅供预览。真实数据会在登录后显示。",
+    en: "Preview only. Actual data appears after login."
+  });
 
   return (
     <div className="min-h-screen bg-[#f5f0e6]">
@@ -168,7 +173,7 @@ export default function HomePage() {
                 </div>
                 <div className="grid gap-4 pt-2 md:grid-cols-2">
                   <Link
-                    href="/dashboard/frequency"
+                    href="/register"
                     className="rounded-3xl border border-white/10 bg-white/8 p-5 transition hover:bg-white/12"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#f0d78a]">I want to</p>
@@ -179,7 +184,7 @@ export default function HomePage() {
                     </p>
                   </Link>
                   <Link
-                    href="/dashboard/referrals"
+                    href="/register"
                     className="rounded-3xl border border-white/10 bg-white/8 p-5 transition hover:bg-white/12"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#f0d78a]">I want to</p>
@@ -200,35 +205,38 @@ export default function HomePage() {
                       <p className="mt-2 font-display text-3xl">把成长感看得更清楚</p>
                     </div>
                     <span className="rounded-full border border-[#f0d78a]/30 bg-[#f0d78a]/10 px-3 py-1 text-xs font-semibold text-[#f0d78a]">
-                      真实感预览
+                      {previewLabel}
                     </span>
                   </div>
+                  <p className="mt-4 text-xs text-white/70">{previewNotice}</p>
                   <div className="mt-6 rounded-3xl bg-[#f7f3ea] p-5 text-[#123524]">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">会员 A 已解锁 20% 层级</span>
-                      <span className="rounded-full bg-[#dff0e5] px-3 py-1 text-xs font-semibold text-[#1b5a3b]">2 个月内达成</span>
+                      <span className="font-medium">{t(language, { zh: "预览会员已解锁层级", en: "Preview member unlocked a tier" })}</span>
+                      <span className="rounded-full bg-[#dff0e5] px-3 py-1 text-xs font-semibold text-[#1b5a3b]">
+                        {t(language, { zh: "示意界面", en: "Sample UI" })}
+                      </span>
                     </div>
                     <div className="mt-5 space-y-4">
                       <div className="rounded-2xl border border-black/10 bg-white p-4">
                         <div className="flex items-center justify-between text-sm text-black/60">
-                          <span>当前层级</span>
-                          <span className="font-semibold text-[#123524]">20%</span>
+                          <span>{t(language, { zh: "层级预览", en: "Tier preview" })}</span>
+                          <span className="font-semibold text-[#123524]">{t(language, { zh: "示意值", en: "Sample" })}</span>
                         </div>
                         <div className="mt-4 h-3 rounded-full bg-[#e7e1d4]">
                           <div className="h-3 w-[68%] rounded-full bg-[linear-gradient(90deg,_#c8a23a,_#e1c76d)]" />
                         </div>
-                        <p className="mt-3 text-sm text-black/55">距离下一次解锁，还差 RM 3,200。</p>
+                        <p className="mt-3 text-sm text-black/55">{t(language, { zh: "预览进度条仅用于展示界面层级感。", en: "This progress bar is a visual preview only." })}</p>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-2xl border border-black/10 bg-white p-4">
-                          <p className="text-sm text-black/55">积分余额</p>
-                          <p className="mt-2 font-display text-3xl">240 pts</p>
-                          <p className="mt-1 text-xs text-black/50">单笔订单最多可抵扣 50%。</p>
+                          <p className="text-sm text-black/55">{t(language, { zh: "积分预览", en: "Points preview" })}</p>
+                          <p className="mt-2 font-display text-3xl">...</p>
+                          <p className="mt-1 text-xs text-black/50">{t(language, { zh: "登录后显示真实积分与抵扣信息。", en: "Real point balances appear after login." })}</p>
                         </div>
                         <div className="rounded-2xl border border-black/10 bg-white p-4">
-                          <p className="text-sm text-black/55">本周提醒</p>
-                          <p className="mt-2 font-medium">守住节奏，完成关键跟进</p>
-                          <p className="mt-1 text-xs text-black/50">一件重点、一项跟进、一个收尾。</p>
+                          <p className="text-sm text-black/55">{t(language, { zh: "提醒预览", en: "Reminder preview" })}</p>
+                          <p className="mt-2 font-medium">{t(language, { zh: "你的个性化提醒将在登录后生成", en: "Your personalized reminder appears after login" })}</p>
+                          <p className="mt-1 text-xs text-black/50">{t(language, { zh: "公开首页不会显示真实会员资料。", en: "The public homepage does not show real member data." })}</p>
                         </div>
                       </div>
                     </div>
@@ -265,6 +273,7 @@ export default function HomePage() {
             <div className="mb-8 max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-jade">会员空间预览 · Inside</p>
               <h2 className="mt-3 font-display text-4xl text-[#123524] md:text-5xl">加入之前，先看看会员空间长什么样</h2>
+              <p className="mt-3 text-sm text-black/60">{previewNotice}</p>
             </div>
             <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
               <div className="overflow-hidden rounded-[36px] border border-black/10 bg-[linear-gradient(180deg,_#173826_0%,_#0f261a_100%)] p-4 shadow-xl">

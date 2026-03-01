@@ -2,15 +2,34 @@ import Link from "next/link";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { t } from "../lib/i18n/shared";
 import { getCurrentLanguage } from "../lib/i18n/server";
+import { createClient } from "../lib/supabase/server";
+import { isAdminEmail } from "../lib/metaenergy/auth";
 
-export default function SiteHeader() {
+export default async function SiteHeader() {
   const language = getCurrentLanguage();
-  const links = [
-    { href: "/dashboard", label: t(language, { zh: "会员中心", en: "Dashboard" }) },
-    { href: "/dashboard/referrals", label: t(language, { zh: "引荐进度", en: "Referrals" }) },
-    { href: "/dashboard/points", label: t(language, { zh: "积分", en: "Points" }) },
-    { href: "/admin/orders", label: t(language, { zh: "后台", en: "Admin" }) }
-  ];
+  const supabase = createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth.user;
+  const links = user
+    ? [
+        { href: "/dashboard", label: t(language, { zh: "会员中心", en: "Dashboard" }) },
+        { href: "/dashboard/referrals", label: t(language, { zh: "引荐进度", en: "Referrals" }) },
+        { href: "/dashboard/points", label: t(language, { zh: "积分", en: "Points" }) }
+      ]
+    : [];
+  let showAdmin = false;
+
+  if (user) {
+    showAdmin = isAdminEmail(user.email);
+    if (!showAdmin) {
+      const { data: role } = await supabase
+        .from("admin_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      showAdmin = Boolean(role && ["ADMIN", "STAFF"].includes(role.role));
+    }
+  }
 
   return (
     <header className="border-b border-black/10 bg-white/80 backdrop-blur">
@@ -26,8 +45,11 @@ export default function SiteHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/login" className="rounded-full bg-[#123524] px-4 py-2 text-white">
-              {t(language, { zh: "会员登入", en: "Member Login" })}
+            {showAdmin ? <Link href="/admin/orders">{t(language, { zh: "后台", en: "Admin" })}</Link> : null}
+            <Link href={user ? "/dashboard" : "/login"} className="rounded-full bg-[#123524] px-4 py-2 text-white">
+              {user
+                ? t(language, { zh: "进入会员中心", en: "Go to Dashboard" })
+                : t(language, { zh: "会员登入", en: "Member Login" })}
             </Link>
           </nav>
         </div>

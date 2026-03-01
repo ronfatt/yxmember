@@ -15,27 +15,28 @@ export default function LoginPage() {
         <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="lg:pr-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(201,162,39,0.35)] bg-white/65 px-4 py-2 backdrop-blur">
-              <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">元象 MetaEnergy</span>
+              <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">元象能量会员系统</span>
               <span className="h-1 w-1 rounded-full bg-[#c9a227]" />
               <span className="text-xs text-black/60">Member Access</span>
             </div>
 
             <h1 className="mt-6 font-display text-4xl leading-tight text-[#0f2f24] md:text-5xl">
-              登入你的會員中心
+              登入你的专属空间
               <span className="mt-3 block text-2xl font-medium text-black/75 md:text-3xl">
-                佣金、積分、頻率工具，一個面板搞定
+                在安定之中，看见你的积累与回馈
               </span>
             </h1>
 
             <p className="mt-5 max-w-xl text-base leading-7 text-black/68">
-              免費會員即可查看引薦進度、積分餘額與最新會員內容，並持續累積你的 MetaEnergy 成長紀錄。
+              成为会员后，你将进入一个更静、更专注的能量空间。这里记录你的成长轨迹、专属礼遇与每一次参与的回响。
+              一切都以长期与稳态为核心，而非短暂的刺激。
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
-                { title: "引薦獎勵", detail: "達標解鎖，最高 25%" },
-                { title: "積分回饋", detail: "每筆消費累積，最多抵扣 50%" },
-                { title: "頻率工具", detail: "個人報告與每週提醒" },
+                { title: "会员礼遇", detail: "专属回馈机制，在稳定与长期中逐步解锁更高层级" },
+                { title: "能量积分积累", detail: "每一次参与，都被温和地记录与回馈" },
+                { title: "频率档案与提醒", detail: "为你的节奏与方向，保留清晰与安定" },
               ].map((item) => (
                 <div
                   key={item.title}

@@ -15,7 +15,7 @@ export default function RegisterPage() {
         <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="lg:pr-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(201,162,39,0.35)] bg-white/65 px-4 py-2 backdrop-blur">
-              <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">元象 MetaEnergy</span>
+              <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">元象能量会员系统</span>
               <span className="h-1 w-1 rounded-full bg-[#c9a227]" />
               <span className="text-xs text-black/60">Free Membership</span>
             </div>

@@ -29,9 +29,9 @@ export default function LoginForm() {
 
   return (
     <div className="w-full max-w-md rounded-[30px] border border-[rgba(201,162,39,0.35)] bg-white/75 p-8 shadow-[0_22px_70px_rgba(0,0,0,0.10)] backdrop-blur-xl">
-      <div className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]/80">MEMBER LOGIN</div>
-      <div className="mt-2 font-display text-4xl text-[#0f2f24]">歡迎回來</div>
-      <div className="mt-2 text-sm leading-6 text-black/68">請使用 Email 與密碼登入你的 MetaEnergy 會員中心。</div>
+      <div className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]/80">Member Access</div>
+      <div className="mt-2 font-display text-4xl text-[#0f2f24]">欢迎回到你的能量空间</div>
+      <div className="mt-2 text-sm leading-6 text-black/68">请输入你的邮箱与密码，继续未完成的轨迹。</div>
 
       <form
         className="mt-7 space-y-4"
@@ -71,20 +71,19 @@ export default function LoginForm() {
           disabled={loading}
           className="w-full rounded-[20px] bg-[linear-gradient(135deg,#e6cc73,#c9a227,#b4881b)] py-3.5 text-sm font-semibold text-[#0f2f24] shadow-[0_14px_30px_rgba(201,162,39,0.25)] transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? "Signing in..." : "Login"}
+          {loading ? "进入中..." : "进入会员空间"}
         </button>
 
         <div className="flex items-center justify-between gap-4 pt-1 text-sm">
           <Link href="/register" className="text-[#0f2f24]/75 underline underline-offset-4 hover:text-[#0f2f24]">
-            免費註冊
+            免费加入会员 →
           </Link>
-          <span className="text-black/45">Secure email login</span>
         </div>
       </form>
 
       <div className="mt-6 rounded-[22px] border border-[rgba(15,47,36,0.08)] bg-[#0f2f24]/5 p-4">
-        <div className="text-xs font-semibold text-[#0f2f24]">今日公告</div>
-        <div className="mt-1 text-xs leading-5 text-black/65">登入後可查看本月活動、產品上新與會員專屬福利。</div>
+        <div className="text-xs font-semibold text-[#0f2f24]">本月动态</div>
+        <div className="mt-1 text-xs leading-5 text-black/65">登入后查看本月专属活动、体验名额与会员礼遇更新。</div>
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ async function updateMonthlyStats(admin: SupabaseClient, userId: string, created
     .from("orders")
     .select("cash_paid")
     .eq("user_id", userId)
+    .eq("payment_status", "PAID")
     .gte("created_at", month)
     .lt("created_at", format(addMonths(new Date(month), 1), "yyyy-MM-dd"));
 
@@ -39,6 +40,90 @@ async function updateMonthlyStats(admin: SupabaseClient, userId: string, created
   );
 
   if (statError) throw statError;
+}
+
+async function recalculateReferrerMetrics(admin: SupabaseClient, referrerId: string) {
+  const { data: referralOrders, error: referralOrdersError } = await admin
+    .from("referral_orders")
+    .select("id,order_id")
+    .eq("referrer_id", referrerId);
+
+  if (referralOrdersError) throw referralOrdersError;
+
+  if (!referralOrders?.length) {
+    const { error: resetError } = await admin
+      .from("users_profile")
+      .update({
+        total_referred_sales: 0,
+        total_commission_earned: 0,
+        tier_rate: 0,
+        tier_unlocked_at: null
+      })
+      .eq("id", referrerId);
+
+    if (resetError) throw resetError;
+    return;
+  }
+
+  const orderIds = referralOrders.map((entry) => entry.order_id);
+  const { data: orders, error: ordersError } = await admin
+    .from("orders")
+    .select("id,amount_total,cash_paid,created_at,payment_status")
+    .in("id", orderIds);
+
+  if (ordersError) throw ordersError;
+
+  const orderMap = new Map((orders ?? []).map((order) => [order.id, order]));
+  const activeEntries = referralOrders
+    .map((entry) => ({
+      referralOrderId: entry.id,
+      order: orderMap.get(entry.order_id)
+    }))
+    .filter((entry): entry is { referralOrderId: string; order: { id: string; amount_total: number; cash_paid: number; created_at: string; payment_status: string } } =>
+      !!entry.order && entry.order.payment_status === "PAID"
+    )
+    .sort((left, right) => new Date(left.order.created_at).getTime() - new Date(right.order.created_at).getTime());
+
+  let cumulativeSales = 0;
+  let totalCommission = 0;
+  let currentTier = 0;
+  let tierUnlockedAt: string | null = null;
+
+  for (const entry of activeEntries) {
+    const rateBeforeOrder = calcCommissionRate(cumulativeSales);
+    const commissionAmount = calcCommissionForOrder(rateBeforeOrder, Number(entry.order.cash_paid ?? 0));
+    const nextCumulativeSales = cumulativeSales + Number(entry.order.amount_total ?? 0);
+    const nextTier = calcCommissionRate(nextCumulativeSales);
+
+    const { error: updateReferralError } = await admin
+      .from("referral_orders")
+      .update({
+        commission_rate: rateBeforeOrder,
+        commission_amount: commissionAmount
+      })
+      .eq("id", entry.referralOrderId);
+
+    if (updateReferralError) throw updateReferralError;
+
+    cumulativeSales = nextCumulativeSales;
+    totalCommission += commissionAmount;
+    if (nextTier > currentTier) {
+      currentTier = nextTier;
+      tierUnlockedAt = entry.order.created_at;
+    }
+  }
+
+  const { error: profileUpdateError } = await admin
+    .from("users_profile")
+    .update({
+      total_referred_sales: cumulativeSales,
+      total_commission_earned: totalCommission,
+      tier_rate: calcCommissionRate(cumulativeSales),
+      tier_unlocked_at: tierUnlockedAt
+    })
+    .eq("id", referrerId);
+
+  if (profileUpdateError) throw profileUpdateError;
 }
 
 export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderInput) {
@@ -146,10 +231,6 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
 
     const currentRate = Number(referrerProfile.tier_rate ?? 0);
     const commissionAmount = calcCommissionForOrder(currentRate, cashPaid);
-    const nextReferredSales = Number(referrerProfile.total_referred_sales ?? 0) + amountTotal;
-    const nextTierRate = calcCommissionRate(nextReferredSales);
-    const tierUnlockedAt =
-      nextTierRate > currentRate ? new Date().toISOString() : null;
 
     const { error: referralOrderError } = await admin.from("referral_orders").insert({
       order_id: order.id,
@@ -161,17 +242,7 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
 
     if (referralOrderError) throw referralOrderError;
 
-    const { error: referrerUpdateError } = await admin
-      .from("users_profile")
-      .update({
-        total_referred_sales: nextReferredSales,
-        total_commission_earned: Number(referrerProfile.total_commission_earned ?? 0) + commissionAmount,
-        tier_rate: nextTierRate,
-        tier_unlocked_at: tierUnlockedAt ?? undefined
-      })
-      .eq("id", input.referrerId);
-
-    if (referrerUpdateError) throw referrerUpdateError;
+    await recalculateReferrerMetrics(admin, effectiveReferrerId);
   }
 
   return {
@@ -202,6 +273,7 @@ export async function runKeepAlive(admin: SupabaseClient, referenceDate = new Da
       .from("orders")
       .select("cash_paid")
       .eq("user_id", profile.id)
+      .eq("payment_status", "PAID")
       .gte("created_at", monthKey)
       .lt("created_at", format(nextMonth, "yyyy-MM-dd"));
 
@@ -255,4 +327,142 @@ export async function runKeepAlive(admin: SupabaseClient, referenceDate = new Da
     resets: results.filter((entry) => entry.reset).length,
     results
   };
+}
+
+export async function updateMemberUpstream(admin: SupabaseClient, memberId: string, upstreamId: string | null) {
+  const { data: profiles, error } = await admin
+    .from("users_profile")
+    .select("id,referred_by");
+
+  if (error) throw error;
+
+  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+
+  if (!profileMap.has(memberId)) {
+    throw new Error("Member not found.");
+  }
+
+  if (upstreamId) {
+    if (!profileMap.has(upstreamId)) {
+      throw new Error("Upstream member not found.");
+    }
+    if (upstreamId === memberId) {
+      throw new Error("A member cannot refer themselves.");
+    }
+
+    let current: string | null | undefined = upstreamId;
+    while (current) {
+      if (current === memberId) {
+        throw new Error("This relationship would create a referral loop.");
+      }
+      current = profileMap.get(current)?.referred_by;
+    }
+  }
+
+  const { error: updateError } = await admin
+    .from("users_profile")
+    .update({ referred_by: upstreamId })
+    .eq("id", memberId);
+
+  if (updateError) throw updateError;
+}
+
+export async function reverseMetaOrder(admin: SupabaseClient, orderId: string) {
+  const { data: order, error: orderError } = await admin
+    .from("orders")
+    .select("id,user_id,payment_status,created_at,cash_paid,points_redeemed")
+    .eq("id", orderId)
+    .single();
+
+  if (orderError || !order) {
+    throw orderError ?? new Error("Order not found.");
+  }
+
+  if (order.payment_status === "REFUNDED") {
+    throw new Error("Order already reversed.");
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from("users_profile")
+    .select("points_balance")
+    .eq("id", order.user_id)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("Buyer profile not found.");
+  }
+
+  const { data: referralOrder } = await admin
+    .from("referral_orders")
+    .select("id,referrer_id")
+    .eq("order_id", orderId)
+    .maybeSingle();
+
+  const { data: ledgerEntries, error: ledgerError } = await admin
+    .from("points_ledger")
+    .select("id,points,action")
+    .eq("order_id", orderId);
+
+  if (ledgerError) throw ledgerError;
+
+  const refundedPoints = Math.max(0, Number(order.points_redeemed ?? 0));
+  const earnedPoints = (ledgerEntries ?? [])
+    .filter((entry) => entry.action === "earn")
+    .reduce((sum, entry) => sum + Number(entry.points ?? 0), 0);
+
+  const adjustments: Array<{ user_id: string; points: number; action: "adjust"; order_id: string; note: string }> = [];
+  if (refundedPoints > 0) {
+    adjustments.push({
+      user_id: order.user_id,
+      points: refundedPoints,
+      action: "adjust",
+      order_id: orderId,
+      note: "Refund reversal: restored redeemed points"
+    });
+  }
+  if (earnedPoints > 0) {
+    adjustments.push({
+      user_id: order.user_id,
+      points: -earnedPoints,
+      action: "adjust",
+      order_id: orderId,
+      note: "Refund reversal: removed earned points"
+    });
+  }
+
+  if (adjustments.length) {
+    const { error: adjustError } = await admin.from("points_ledger").insert(adjustments);
+    if (adjustError) throw adjustError;
+  }
+
+  const { error: pointsUpdateError } = await admin
+    .from("users_profile")
+    .update({
+      points_balance: Number(profile.points_balance ?? 0) + refundedPoints - earnedPoints
+    })
+    .eq("id", order.user_id);
+
+  if (pointsUpdateError) throw pointsUpdateError;
+
+  const { error: refundError } = await admin
+    .from("orders")
+    .update({
+      payment_status: "REFUNDED",
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", orderId);
+
+  if (refundError) throw refundError;
+
+  if (referralOrder) {
+    const { error: deleteReferralError } = await admin
+      .from("referral_orders")
+      .delete()
+      .eq("id", referralOrder.id);
+
+    if (deleteReferralError) throw deleteReferralError;
+    await recalculateReferrerMetrics(admin, referralOrder.referrer_id);
+  }
+
+  await updateMonthlyStats(admin, order.user_id, order.created_at);
 }

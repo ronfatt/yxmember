@@ -1,6 +1,8 @@
+import { revalidatePath } from "next/cache";
 import AdminOrderForm from "../../../components/AdminOrderForm";
 import { requireAdmin } from "../../../lib/actions/session";
 import { formatMoney, formatPercent } from "../../../lib/metaenergy/helpers";
+import { reverseMetaOrder } from "../../../lib/metaenergy/service";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 type AdminOrdersPageProps = {
@@ -9,8 +11,21 @@ type AdminOrdersPageProps = {
     buyer?: string;
     referrer?: string;
     limit?: string;
+    status?: string;
   };
 };
+
+async function reverseOrderAction(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  const orderId = String(formData.get("order_id"));
+  await reverseMetaOrder(supabaseAdmin(), orderId);
+  revalidatePath("/admin/orders");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/points");
+  revalidatePath("/dashboard/referrals");
+  revalidatePath("/dashboard/history");
+}
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireAdmin();
@@ -18,13 +33,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const sourceFilter = searchParams?.source === "referred" || searchParams?.source === "personal" ? searchParams.source : "all";
   const buyerFilter = searchParams?.buyer ?? "";
   const referrerFilter = searchParams?.referrer ?? "";
+  const statusFilter = ["all", "PAID", "REFUNDED"].includes(searchParams?.status ?? "") ? searchParams?.status ?? "all" : "all";
   const limit = Math.min(Math.max(Number(searchParams?.limit ?? "20"), 5), 100);
 
   const [{ data: users }, { data: allOrders }, { data: referralOrders }] = await Promise.all([
     admin.from("users_profile").select("id,name,referral_code,referred_by").order("created_at", { ascending: false }),
     admin
       .from("orders")
-      .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at")
+      .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at,payment_status")
       .order("created_at", { ascending: false })
       .limit(limit),
     admin
@@ -65,8 +81,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       sourceFilter === "all" ||
       (sourceFilter === "referred" && referralOrderMap.has(order.id)) ||
       (sourceFilter === "personal" && !referralOrderMap.has(order.id));
+    const statusMatches = statusFilter === "all" || order.payment_status === statusFilter;
 
-    return buyerMatches && referrerMatches && sourceMatches;
+    return buyerMatches && referrerMatches && sourceMatches && statusMatches;
   });
 
   const filteredReferralOrders = (referralOrders ?? []).filter((entry) => {
@@ -138,6 +155,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
             />
           </label>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-black/65">Status</span>
+            <select name="status" defaultValue={statusFilter} className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3">
+              <option value="all">all</option>
+              <option value="PAID">paid</option>
+              <option value="REFUNDED">refunded</option>
+            </select>
+          </label>
           <div className="flex items-end gap-3 lg:col-span-4">
             <button type="submit" className="rounded-full bg-[#123524] px-5 py-2 text-sm font-semibold text-white">
               Apply filters
@@ -163,7 +188,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     <p className="font-medium text-[#123524]">
                       {userMap.get(order.user_id)?.name ?? "Unknown member"} ({userMap.get(order.user_id)?.referralCode ?? order.user_id})
                     </p>
-                    <p className="text-xs uppercase tracking-wide text-black/45">{order.order_type}</p>
+                    <p className="text-xs uppercase tracking-wide text-black/45">
+                      {order.order_type} | {order.payment_status}
+                    </p>
                   </div>
                   <p className="text-[#123524]">{formatMoney(Number(order.amount_total))}</p>
                 </div>
@@ -183,7 +210,21 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     </span>
                   </p>
                 ) : null}
-                <p className="mt-1 text-black/45">{new Date(order.created_at).toLocaleString("en-MY")}</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-black/45">{new Date(order.created_at).toLocaleString("en-MY")}</p>
+                  {order.payment_status === "PAID" ? (
+                    <form action={reverseOrderAction}>
+                      <input type="hidden" name="order_id" value={order.id} />
+                      <button className="rounded-full border border-[#8c3a1f]/20 bg-[#fff5f1] px-4 py-2 text-xs font-semibold text-[#8c3a1f]">
+                        Reverse order
+                      </button>
+                    </form>
+                  ) : (
+                    <span className="rounded-full border border-black/10 bg-[#f8f6f2] px-4 py-2 text-xs font-semibold text-black/55">
+                      Refunded
+                    </span>
+                  )}
+                </div>
               </div>
             ))
           ) : (

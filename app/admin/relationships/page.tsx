@@ -1,4 +1,6 @@
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/actions/session";
+import { updateMemberUpstream } from "../../../lib/metaenergy/service";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,16 @@ type RelationshipsPageProps = {
     q?: string;
   };
 };
+
+async function updateUpstreamAction(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  const memberId = String(formData.get("member_id"));
+  const upstreamId = String(formData.get("upstream_id") || "") || null;
+  await updateMemberUpstream(supabaseAdmin(), memberId, upstreamId);
+  revalidatePath("/admin/relationships");
+  revalidatePath("/admin/orders");
+}
 
 export default async function AdminRelationshipsPage({ searchParams }: RelationshipsPageProps) {
   await requireAdmin();
@@ -107,6 +119,32 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
                   <p className="font-medium text-black/70">Upstream</p>
                   <p className="mt-1 text-[#123524]">
                     {upstream ? `${upstream.name} (${upstream.referralCode})` : "No upstream referrer"}
+                  </p>
+                  <form action={updateUpstreamAction} className="mt-3 flex flex-wrap items-end gap-3">
+                    <input type="hidden" name="member_id" value={profile.id} />
+                    <label className="min-w-[260px] flex-1 space-y-2 text-sm">
+                      <span className="font-medium text-black/65">Change upstream</span>
+                      <select
+                        name="upstream_id"
+                        defaultValue={profile.referred_by ?? ""}
+                        className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+                      >
+                        <option value="">No upstream referrer</option>
+                        {(profiles ?? [])
+                          .filter((candidate) => candidate.id !== profile.id)
+                          .map((candidate) => (
+                            <option key={candidate.id} value={candidate.id}>
+                              {candidate.name ?? "Member"} ({candidate.referral_code})
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    <button className="rounded-full bg-[#123524] px-5 py-2 text-sm font-semibold text-white">
+                      Save upstream
+                    </button>
+                  </form>
+                  <p className="mt-2 text-xs text-black/50">
+                    Relationship edits affect future order attribution only. Historical commissions are not rewritten automatically.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import type { Language } from "../lib/i18n/shared";
 
 type Slot = {
   id: string;
@@ -12,7 +13,7 @@ type Slot = {
   room_name: string;
 };
 
-export default function RoomSlots({ slots }: { slots: Slot[] }) {
+export default function RoomSlots({ slots, language }: { slots: Slot[]; language: Language }) {
   const [partySize, setPartySize] = useState(1);
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -27,11 +28,11 @@ export default function RoomSlots({ slots }: { slots: Slot[] }) {
       if (!res.ok) throw new Error("Failed");
       const { order_id } = await res.json();
       if (order_id) {
-        toast.success("Room booking created. Upload bank-in slip in dashboard.");
+        toast.success(language === "en" ? "Room booking created. Upload bank-in slip in dashboard." : "房间预约已创建，请到会员中心上传汇款凭证。");
         window.location.href = "/dashboard";
       }
     } catch (error) {
-      toast.error("Unable to start room checkout.");
+      toast.error(language === "en" ? "Unable to start room checkout." : "无法开始房间预约结账。");
     } finally {
       setLoading(null);
     }
@@ -40,7 +41,7 @@ export default function RoomSlots({ slots }: { slots: Slot[] }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 text-sm">
-        <span>Party size</span>
+        <span>{language === "en" ? "Party size" : "人数"}</span>
         <input
           type="number"
           min={1}
@@ -55,14 +56,14 @@ export default function RoomSlots({ slots }: { slots: Slot[] }) {
           <div>
             <p className="text-sm text-black/60">{slot.room_name}</p>
             <p className="text-sm">{slot.start_at} - {slot.end_at}</p>
-            <p className="text-xs text-black/50">Remaining {slot.remaining_capacity}/{slot.total_capacity}</p>
+            <p className="text-xs text-black/50">{language === "en" ? "Remaining " : "剩余 "} {slot.remaining_capacity}/{slot.total_capacity}</p>
           </div>
           <button
             onClick={() => book(slot.id)}
             disabled={loading === slot.id || slot.remaining_capacity < partySize}
             className="rounded-full bg-ink px-4 py-2 text-sm text-white disabled:opacity-50"
           >
-            {loading === slot.id ? "Redirecting..." : "Book"}
+            {loading === slot.id ? (language === "en" ? "Redirecting..." : "跳转中...") : language === "en" ? "Book" : "预约"}
           </button>
         </div>
       ))}

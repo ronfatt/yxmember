@@ -1,4 +1,6 @@
 import { revalidatePath } from "next/cache";
+import { getCurrentLanguage } from "../../../lib/i18n/server";
+import { t } from "../../../lib/i18n/shared";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 async function createCourse(formData: FormData) {
@@ -46,6 +48,7 @@ async function toggleCoursePublish(formData: FormData) {
 }
 
 export default async function AdminCoursesPage() {
+  const language = getCurrentLanguage();
   const admin = supabaseAdmin();
   const { data: courses } = await admin.from("courses").select("*").order("created_at", { ascending: false });
   const { data: sessions } = await admin.from("course_sessions").select("*").order("start_at", { ascending: true });
@@ -53,64 +56,72 @@ export default async function AdminCoursesPage() {
   return (
     <div className="space-y-6">
       <section className="card space-y-3">
-        <h2 className="font-display text-2xl">Create Course</h2>
+        <h2 className="font-display text-2xl">{t(language, { zh: "创建课程", en: "Create Course" })}</h2>
         <form action={createCourse} className="grid gap-3">
-          <input className="rounded border p-2" name="title" placeholder="Title" required />
-          <input className="rounded border p-2" name="tagline" placeholder="Tagline" />
-          <textarea className="rounded border p-2" name="description" placeholder="Description" />
-          <input className="rounded border p-2" name="duration_text" placeholder="Duration" />
-          <input className="rounded border p-2" name="level" placeholder="Level" />
-          <input className="rounded border p-2" name="location_text" placeholder="Location" />
-          <button className="rounded-full bg-ink px-4 py-2 text-white">Create</button>
+          <input className="rounded border p-2" name="title" placeholder={t(language, { zh: "课程标题", en: "Title" })} required />
+          <input className="rounded border p-2" name="tagline" placeholder={t(language, { zh: "副标题", en: "Tagline" })} />
+          <textarea className="rounded border p-2" name="description" placeholder={t(language, { zh: "课程描述", en: "Description" })} />
+          <input className="rounded border p-2" name="duration_text" placeholder={t(language, { zh: "时长", en: "Duration" })} />
+          <input className="rounded border p-2" name="level" placeholder={t(language, { zh: "难度级别", en: "Level" })} />
+          <input className="rounded border p-2" name="location_text" placeholder={t(language, { zh: "地点", en: "Location" })} />
+          <button className="rounded-full bg-ink px-4 py-2 text-white">{t(language, { zh: "创建", en: "Create" })}</button>
         </form>
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-display text-2xl">Create Session</h2>
+        <h2 className="font-display text-2xl">{t(language, { zh: "创建场次", en: "Create Session" })}</h2>
         <form action={createSession} className="grid gap-3">
           <select name="course_id" className="rounded border p-2" required>
-            <option value="">Select course</option>
+            <option value="">{t(language, { zh: "选择课程", en: "Select course" })}</option>
             {courses?.map((course) => (
               <option key={course.id} value={course.id}>{course.title}</option>
             ))}
           </select>
-          <input className="rounded border p-2" name="start_at" placeholder="Start (ISO)" required />
-          <input className="rounded border p-2" name="end_at" placeholder="End (ISO)" required />
-          <input className="rounded border p-2" name="timezone" placeholder="Timezone" defaultValue="Asia/Kuala_Lumpur" />
-          <input className="rounded border p-2" name="venue_name" placeholder="Venue Name" />
-          <input className="rounded border p-2" name="venue_address" placeholder="Venue Address" />
-          <input className="rounded border p-2" name="capacity" placeholder="Capacity" type="number" />
-          <input className="rounded border p-2" name="price_cents" placeholder="Price (cents)" type="number" />
-          <input className="rounded border p-2" name="currency" placeholder="Currency" defaultValue="MYR" />
-          <button className="rounded-full bg-ink px-4 py-2 text-white">Create Session</button>
+          <input className="rounded border p-2" name="start_at" placeholder={t(language, { zh: "开始时间（ISO）", en: "Start (ISO)" })} required />
+          <input className="rounded border p-2" name="end_at" placeholder={t(language, { zh: "结束时间（ISO）", en: "End (ISO)" })} required />
+          <input className="rounded border p-2" name="timezone" placeholder={t(language, { zh: "时区", en: "Timezone" })} defaultValue="Asia/Kuala_Lumpur" />
+          <input className="rounded border p-2" name="venue_name" placeholder={t(language, { zh: "场地名称", en: "Venue Name" })} />
+          <input className="rounded border p-2" name="venue_address" placeholder={t(language, { zh: "场地地址", en: "Venue Address" })} />
+          <input className="rounded border p-2" name="capacity" placeholder={t(language, { zh: "人数上限", en: "Capacity" })} type="number" />
+          <input className="rounded border p-2" name="price_cents" placeholder={t(language, { zh: "价格（分）", en: "Price (cents)" })} type="number" />
+          <input className="rounded border p-2" name="currency" placeholder={t(language, { zh: "货币", en: "Currency" })} defaultValue="MYR" />
+          <button className="rounded-full bg-ink px-4 py-2 text-white">{t(language, { zh: "创建场次", en: "Create Session" })}</button>
         </form>
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-display text-2xl">Courses</h2>
-        {courses?.map((course) => (
-          <form key={course.id} action={toggleCoursePublish} className="flex items-center justify-between gap-3 border-b pb-2">
-            <div>
-              <p className="font-medium">{course.title}</p>
-              <p className="text-xs text-black/50">{course.tagline}</p>
-            </div>
-            <input type="hidden" name="id" value={course.id} />
-            <select name="is_published" defaultValue={String(course.is_published)} className="rounded border p-2 text-sm">
-              <option value="true">Published</option>
-              <option value="false">Draft</option>
-            </select>
-            <button className="rounded-full bg-ink px-3 py-1 text-xs text-white">Update</button>
-          </form>
-        ))}
+        <h2 className="font-display text-2xl">{t(language, { zh: "课程列表", en: "Courses" })}</h2>
+        {courses?.length ? (
+          courses.map((course) => (
+            <form key={course.id} action={toggleCoursePublish} className="flex items-center justify-between gap-3 border-b pb-2">
+              <div>
+                <p className="font-medium">{course.title}</p>
+                <p className="text-xs text-black/50">{course.tagline}</p>
+              </div>
+              <input type="hidden" name="id" value={course.id} />
+              <select name="is_published" defaultValue={String(course.is_published)} className="rounded border p-2 text-sm">
+                <option value="true">{t(language, { zh: "已发布", en: "Published" })}</option>
+                <option value="false">{t(language, { zh: "草稿", en: "Draft" })}</option>
+              </select>
+              <button className="rounded-full bg-ink px-3 py-1 text-xs text-white">{t(language, { zh: "更新", en: "Update" })}</button>
+            </form>
+          ))
+        ) : (
+          <p className="text-sm text-black/60">{t(language, { zh: "还没有课程。", en: "No courses yet." })}</p>
+        )}
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-display text-2xl">Sessions</h2>
-        {sessions?.map((session) => (
-          <div key={session.id} className="text-sm text-black/70 border-b pb-2">
-            {session.start_at} - {session.end_at} ({session.status})
-          </div>
-        ))}
+        <h2 className="font-display text-2xl">{t(language, { zh: "场次列表", en: "Sessions" })}</h2>
+        {sessions?.length ? (
+          sessions.map((session) => (
+            <div key={session.id} className="border-b pb-2 text-sm text-black/70">
+              {session.start_at} - {session.end_at} ({session.status})
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-black/60">{t(language, { zh: "还没有场次。", en: "No sessions yet." })}</p>
+        )}
       </section>
     </div>
   );

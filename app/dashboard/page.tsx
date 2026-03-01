@@ -1,4 +1,5 @@
 import { format, startOfMonth, startOfWeek } from "date-fns";
+import Link from "next/link";
 import DashboardShell from "../../components/DashboardShell";
 import FrequencyGenerator from "../../components/FrequencyGenerator";
 import ReminderGenerator from "../../components/ReminderGenerator";
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
   const weekKey = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-  const [{ data: profile }, { data: currentMonth }, { data: latestReport }, { data: latestReminder }] =
+  const [{ data: profile }, { data: currentMonth }, { data: latestReport }, { data: latestReminder }, { count: mentorServiceCount }] =
     await Promise.all([
       supabase
         .from("users_profile")
@@ -68,7 +69,11 @@ export default async function DashboardPage() {
         .select("content")
         .eq("user_id", user.id)
         .eq("week_start", weekKey)
-        .maybeSingle()
+        .maybeSingle(),
+      supabase
+        .from("mentor_services")
+        .select("id", { count: "exact", head: true })
+        .eq("active", true)
     ]);
 
   const rawFrequency = latestReport?.report_json as FrequencyReport | undefined;
@@ -124,6 +129,33 @@ export default async function DashboardPage() {
           value={`${Number(profile?.points_balance ?? 0)} ${language === "en" ? "pts" : "积分"}`}
           caption={buildPointsHint(language)}
         />
+        <div className="card flex flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-sm text-black/55">{t(language, { zh: "导师会谈", en: "Guidance sessions" })}</p>
+            <p className="font-display text-3xl text-[#123524]">{t(language, { zh: "预约导师", en: "Book a mentor" })}</p>
+            <p className="text-sm text-black/65">
+              {mentorServiceCount
+                ? t(language, {
+                    zh: "进入导师页，选择会谈服务、时间与会谈意图。",
+                    en: "Choose a mentor, service, time slot, and intake in one flow."
+                  })
+                : t(language, {
+                    zh: "导师资料已开放，服务时段正在整理中。",
+                    en: "Mentor profiles are available, while bookable services are still being prepared."
+                  })}
+            </p>
+          </div>
+          <div>
+            <Link
+              href="/mentors"
+              className="inline-flex rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524] shadow-[0_16px_28px_rgba(200,165,92,0.2)]"
+            >
+              {mentorServiceCount
+                ? t(language, { zh: "前往导师页", en: "Browse mentors" })
+                : t(language, { zh: "查看导师", en: "View mentors" })}
+            </Link>
+          </div>
+        </div>
         <div className="card space-y-4 lg:col-span-2">
           <div className="flex items-start justify-between gap-4">
             <div>

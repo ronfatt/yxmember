@@ -3,22 +3,35 @@ import { requireAdmin } from "../../../lib/actions/session";
 import { formatMoney, formatPercent } from "../../../lib/metaenergy/helpers";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
-export default async function AdminOrdersPage() {
+type AdminOrdersPageProps = {
+  searchParams?: {
+    source?: string;
+    buyer?: string;
+    referrer?: string;
+    limit?: string;
+  };
+};
+
+export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireAdmin();
   const admin = supabaseAdmin();
+  const sourceFilter = searchParams?.source === "referred" || searchParams?.source === "personal" ? searchParams.source : "all";
+  const buyerFilter = searchParams?.buyer ?? "";
+  const referrerFilter = searchParams?.referrer ?? "";
+  const limit = Math.min(Math.max(Number(searchParams?.limit ?? "20"), 5), 100);
 
-  const [{ data: users }, { data: orders }, { data: referralOrders }] = await Promise.all([
+  const [{ data: users }, { data: allOrders }, { data: referralOrders }] = await Promise.all([
     admin.from("users_profile").select("id,name,referral_code").order("created_at", { ascending: false }),
     admin
       .from("orders")
       .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at")
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(limit),
     admin
       .from("referral_orders")
       .select("id,order_id,commission_rate,commission_amount,referrer_id,referred_user_id,created_at")
       .order("created_at", { ascending: false })
-      .limit(20)
+      .limit(limit)
   ]);
 
   const userMap = new Map(
@@ -32,6 +45,44 @@ export default async function AdminOrdersPage() {
   );
 
   const referralOrderMap = new Map((referralOrders ?? []).map((entry) => [entry.order_id, entry]));
+  const normalizedBuyerFilter = buyerFilter.trim().toLowerCase();
+  const normalizedReferrerFilter = referrerFilter.trim().toLowerCase();
+
+  const orders = (allOrders ?? []).filter((order) => {
+    const buyer = userMap.get(order.user_id);
+    const referralEntry = referralOrderMap.get(order.id);
+    const referrer = referralEntry ? userMap.get(referralEntry.referrer_id) : null;
+    const buyerMatches =
+      !normalizedBuyerFilter ||
+      buyer?.name.toLowerCase().includes(normalizedBuyerFilter) ||
+      buyer?.referralCode.toLowerCase().includes(normalizedBuyerFilter);
+    const referrerMatches =
+      !normalizedReferrerFilter ||
+      (!!referrer &&
+        (referrer.name.toLowerCase().includes(normalizedReferrerFilter) ||
+          referrer.referralCode.toLowerCase().includes(normalizedReferrerFilter)));
+    const sourceMatches =
+      sourceFilter === "all" ||
+      (sourceFilter === "referred" && referralOrderMap.has(order.id)) ||
+      (sourceFilter === "personal" && !referralOrderMap.has(order.id));
+
+    return buyerMatches && referrerMatches && sourceMatches;
+  });
+
+  const filteredReferralOrders = (referralOrders ?? []).filter((entry) => {
+    const buyer = userMap.get(entry.referred_user_id);
+    const referrer = userMap.get(entry.referrer_id);
+    const buyerMatches =
+      !normalizedBuyerFilter ||
+      buyer?.name.toLowerCase().includes(normalizedBuyerFilter) ||
+      buyer?.referralCode.toLowerCase().includes(normalizedBuyerFilter);
+    const referrerMatches =
+      !normalizedReferrerFilter ||
+      referrer?.name.toLowerCase().includes(normalizedReferrerFilter) ||
+      referrer?.referralCode.toLowerCase().includes(normalizedReferrerFilter);
+
+    return buyerMatches && referrerMatches;
+  });
 
   return (
     <div className="space-y-6">
@@ -44,9 +95,66 @@ export default async function AdminOrdersPage() {
         <AdminOrderForm users={users ?? []} />
       </div>
 
+      <div className="card space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-jade">Admin filters</p>
+          <h2 className="font-display text-3xl text-[#123524]">Filter records</h2>
+        </div>
+        <form className="grid gap-3 lg:grid-cols-4">
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-black/65">Source</span>
+            <select name="source" defaultValue={sourceFilter} className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3">
+              <option value="all">all</option>
+              <option value="referred">referred</option>
+              <option value="personal">personal/direct</option>
+            </select>
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-black/65">Buyer name or code</span>
+            <input
+              name="buyer"
+              defaultValue={buyerFilter}
+              placeholder="ronnie / RONNIE"
+              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            />
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-black/65">Referrer name or code</span>
+            <input
+              name="referrer"
+              defaultValue={referrerFilter}
+              placeholder="ronfatt / RONFAT"
+              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            />
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-black/65">Limit</span>
+            <input
+              type="number"
+              name="limit"
+              min="5"
+              max="100"
+              defaultValue={String(limit)}
+              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+            />
+          </label>
+          <div className="flex items-end gap-3 lg:col-span-4">
+            <button type="submit" className="rounded-full bg-[#123524] px-5 py-2 text-sm font-semibold text-white">
+              Apply filters
+            </button>
+            <a href="/admin/orders" className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-semibold text-[#123524]">
+              Clear
+            </a>
+          </div>
+        </form>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="card space-y-4">
-          <h2 className="font-display text-3xl text-[#123524]">Recent orders</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-3xl text-[#123524]">Recent orders</h2>
+            <p className="text-sm text-black/55">{orders.length} shown</p>
+          </div>
           {orders?.length ? (
             orders.map((order) => (
               <div key={order.id} className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm">
@@ -83,9 +191,12 @@ export default async function AdminOrdersPage() {
           )}
         </div>
         <div className="card space-y-4">
-          <h2 className="font-display text-3xl text-[#123524]">Referral commissions</h2>
-          {referralOrders?.length ? (
-            referralOrders.map((entry) => (
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-3xl text-[#123524]">Referral commissions</h2>
+            <p className="text-sm text-black/55">{filteredReferralOrders.length} shown</p>
+          </div>
+          {filteredReferralOrders?.length ? (
+            filteredReferralOrders.map((entry) => (
               <div key={entry.id} className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div>

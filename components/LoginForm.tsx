@@ -11,17 +11,20 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      setErrorMessage("");
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      router.push("/dashboard");
-      router.refresh();
+      window.location.assign("/dashboard");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Login failed.");
+      const message = error instanceof Error ? error.message : "Login failed.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -73,6 +76,12 @@ export default function LoginForm() {
         >
           {loading ? "进入中..." : "进入会员空间"}
         </button>
+
+        {errorMessage ? (
+          <div className="rounded-[18px] border border-[#c98f8f]/30 bg-[#fff4f1] px-4 py-3 text-sm text-[#8b3a2a]">
+            {errorMessage}
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between gap-4 pt-1 text-sm">
           <Link href="/register" className="text-[#0f2f24]/75 underline underline-offset-4 hover:text-[#0f2f24]">

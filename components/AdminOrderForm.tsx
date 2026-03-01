@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -8,6 +8,7 @@ type UserOption = {
   id: string;
   name: string | null;
   referral_code: string;
+  referred_by: string | null;
 };
 
 export default function AdminOrderForm({ users }: { users: UserOption[] }) {
@@ -17,10 +18,14 @@ export default function AdminOrderForm({ users }: { users: UserOption[] }) {
   const [amountTotal, setAmountTotal] = useState("100");
   const [pointsRedeemed, setPointsRedeemed] = useState("0");
   const [orderType, setOrderType] = useState<"personal" | "service" | "product">("product");
-  const [source, setSource] = useState<"personal" | "referred">("personal");
   const [referrerId, setReferrerId] = useState("");
   const selectedUser = users.find((user) => user.id === userId);
-  const selectedReferrer = users.find((user) => user.id === referrerId);
+  const inferredReferrerId = selectedUser?.referred_by ?? "";
+  const selectedReferrer = users.find((user) => user.id === (referrerId || inferredReferrerId));
+  const source = inferredReferrerId ? "referred" : "personal";
+  useEffect(() => {
+    setReferrerId(inferredReferrerId);
+  }, [inferredReferrerId]);
 
   const handleSubmit = async () => {
     const payload = {
@@ -28,7 +33,7 @@ export default function AdminOrderForm({ users }: { users: UserOption[] }) {
       amountTotal: Number(amountTotal),
       pointsRedeemed: Number(pointsRedeemed),
       orderType,
-      referrerId: source === "referred" ? referrerId : null,
+      referrerId: source === "referred" ? (referrerId || inferredReferrerId) : null,
       referredUserId: source === "referred" ? userId : null
     };
 
@@ -102,32 +107,26 @@ export default function AdminOrderForm({ users }: { users: UserOption[] }) {
         </label>
         <label className="space-y-2 text-sm">
           <span className="font-medium text-black/65">Order source</span>
-          <select
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
-            value={source}
-            onChange={(event) => setSource(event.target.value as "personal" | "referred")}
-          >
-            <option value="personal">personal</option>
-            <option value="referred">referred</option>
-          </select>
+          <div className="w-full rounded-2xl border border-black/10 bg-[#f8f6f2] px-4 py-3">
+            <p className="font-medium text-[#123524]">{source === "referred" ? "referred" : "personal/direct"}</p>
+            <p className="mt-1 text-xs text-black/55">
+              {source === "referred"
+                ? "Auto-detected from this member's referred_by relationship."
+                : "This member has no upstream referrer, so the order stays personal/direct."}
+            </p>
+          </div>
         </label>
         {source === "referred" ? (
           <label className="space-y-2 text-sm">
             <span className="font-medium text-black/65">Referrer</span>
-            <select
-              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
-              value={referrerId}
-              onChange={(event) => setReferrerId(event.target.value)}
-            >
-              <option value="">Select referrer</option>
-              {users
-                .filter((user) => user.id !== userId)
-                .map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name ?? "Member"} ({user.referral_code})
-                  </option>
-                ))}
-            </select>
+            <div className="w-full rounded-2xl border border-black/10 bg-[#f8f6f2] px-4 py-3">
+              <p className="font-medium text-[#123524]">
+                {selectedReferrer?.name ?? "Member"} ({selectedReferrer?.referral_code ?? "-"})
+              </p>
+              <p className="mt-1 text-xs text-black/55">
+                Locked from buyer profile `referred_by`. Change the member relationship if you need to correct attribution.
+              </p>
+            </div>
           </label>
         ) : null}
       </div>
@@ -136,10 +135,10 @@ export default function AdminOrderForm({ users }: { users: UserOption[] }) {
         {source === "referred" ? (
           <>
             {" "}Referrer: <span className="font-medium text-[#123524]">{selectedReferrer?.name ?? "Not selected"} ({selectedReferrer?.referral_code ?? "-"})</span>.
-            {" "}The threshold-crossing order still uses the previous tier.
+            {" "}This order will count toward the upstream member's cumulative referred sales. The threshold-crossing order still uses the previous tier.
           </>
         ) : (
-          <> This will be stored as a direct buyer order without referral commission.</>
+          <> This will be stored as a direct buyer order without referral commission or upstream cumulative sales.</>
         )}
       </div>
       <button

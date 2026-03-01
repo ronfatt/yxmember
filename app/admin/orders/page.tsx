@@ -21,7 +21,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const limit = Math.min(Math.max(Number(searchParams?.limit ?? "20"), 5), 100);
 
   const [{ data: users }, { data: allOrders }, { data: referralOrders }] = await Promise.all([
-    admin.from("users_profile").select("id,name,referral_code").order("created_at", { ascending: false }),
+    admin.from("users_profile").select("id,name,referral_code,referred_by").order("created_at", { ascending: false }),
     admin
       .from("orders")
       .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at")

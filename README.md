@@ -21,6 +21,10 @@ Copy [`.env.example`](/Users/rms/Desktop/元像/yuanxiang%20app/.env.example) to
 - `CRON_SECRET`
 - `RESEND_API_KEY` (optional, for program reservation emails)
 - `EMAIL_FROM` (optional sender for reservation emails)
+- `BANK_BANK_NAME` (optional, shown on member programs page)
+- `BANK_ACCOUNT_NAME` (optional, shown on member programs page)
+- `BANK_ACCOUNT_NUMBER` (optional, shown on member programs page)
+- `BANK_TRANSFER_NOTE` (optional payment reference / note)
 
 ## Database setup
 

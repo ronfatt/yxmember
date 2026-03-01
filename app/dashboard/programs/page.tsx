@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CopyField from "../../../components/CopyField";
 import DashboardShell from "../../../components/DashboardShell";
 import OrderSlipUpload from "../../../components/OrderSlipUpload";
 import { requireUser } from "../../../lib/actions/session";
@@ -19,6 +20,10 @@ export default async function DashboardProgramsPage() {
   const user = await requireUser();
   const language = getCurrentLanguage();
   const supabase = createClient();
+  const bankAccountName = process.env.BANK_ACCOUNT_NAME?.trim();
+  const bankAccountNumber = process.env.BANK_ACCOUNT_NUMBER?.trim();
+  const bankBankName = process.env.BANK_BANK_NAME?.trim();
+  const bankTransferNote = process.env.BANK_TRANSFER_NOTE?.trim();
 
   const [{ data: courses }, { data: sessions }, { data: orders }] = await Promise.all([
     supabase
@@ -134,6 +139,34 @@ export default async function DashboardProgramsPage() {
         </section>
 
         <section className="space-y-6">
+          <div className="card space-y-4">
+            <div>
+              <p className="text-sm text-black/55">{t(language, { zh: "汇款信息", en: "Bank transfer details" })}</p>
+              <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "银行转账资料", en: "Transfer instructions" })}</h2>
+            </div>
+            <p className="text-sm text-black/65">
+              {t(language, {
+                zh: "报名收费课程或活动后，可按以下资料完成银行转账，并在下方上传单据。",
+                en: "For paid programs, transfer using the details below and then upload your slip underneath."
+              })}
+            </p>
+            {bankAccountName || bankAccountNumber || bankBankName ? (
+              <div className="space-y-3">
+                {bankBankName ? <CopyField label={t(language, { zh: "银行", en: "Bank" })} value={bankBankName} language={language} /> : null}
+                {bankAccountName ? <CopyField label={t(language, { zh: "账户名称", en: "Account name" })} value={bankAccountName} language={language} /> : null}
+                {bankAccountNumber ? <CopyField label={t(language, { zh: "账号", en: "Account number" })} value={bankAccountNumber} language={language} /> : null}
+                {bankTransferNote ? <CopyField label={t(language, { zh: "备注", en: "Reference" })} value={bankTransferNote} language={language} /> : null}
+              </div>
+            ) : (
+              <p className="text-sm text-[#8c3a1f]">
+                {t(language, {
+                  zh: "尚未设置银行账户资料。请先联系管理员，或在部署环境中填写 BANK_ACCOUNT_NAME / BANK_ACCOUNT_NUMBER / BANK_BANK_NAME。",
+                  en: "Bank transfer details have not been configured yet. Please contact an admin or set BANK_ACCOUNT_NAME / BANK_ACCOUNT_NUMBER / BANK_BANK_NAME in the deployment environment."
+                })}
+              </p>
+            )}
+          </div>
+
           <div className="card space-y-4">
             <div>
               <p className="text-sm text-black/55">{t(language, { zh: "待完成付款", en: "Pending transfer" })}</p>

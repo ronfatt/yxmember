@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
+import CopyField from "../../../components/CopyField";
 import { renderProgramEmail, sendEmail } from "../../../lib/notifications/email";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
@@ -127,6 +128,10 @@ async function approveCourseTransfer(formData: FormData) {
 export default async function AdminCoursesPage() {
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
+  const bankAccountName = process.env.BANK_ACCOUNT_NAME?.trim();
+  const bankAccountNumber = process.env.BANK_ACCOUNT_NUMBER?.trim();
+  const bankBankName = process.env.BANK_BANK_NAME?.trim();
+  const bankTransferNote = process.env.BANK_TRANSFER_NOTE?.trim();
   const [{ data: courses }, { data: sessions }, { data: pendingOrders }, { data: profiles }] = await Promise.all([
     admin.from("courses").select("*").order("created_at", { ascending: false }),
     admin.from("course_sessions").select("*").order("start_at", { ascending: true }),
@@ -145,6 +150,28 @@ export default async function AdminCoursesPage() {
 
   return (
     <div className="space-y-6">
+      <section className="card space-y-4">
+        <div className="space-y-1">
+          <h2 className="font-display text-2xl">{t(language, { zh: "当前汇款资料", en: "Current bank transfer details" })}</h2>
+          <p className="text-sm text-black/60">{t(language, { zh: "会员在课程活动页看到的银行转账资料。建议先在部署环境中设置这些值。", en: "These are the bank transfer details shown to members on the programs page." })}</p>
+        </div>
+        {bankAccountName || bankAccountNumber || bankBankName ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {bankBankName ? <CopyField label={t(language, { zh: "银行", en: "Bank" })} value={bankBankName} language={language} /> : null}
+            {bankAccountName ? <CopyField label={t(language, { zh: "账户名称", en: "Account name" })} value={bankAccountName} language={language} /> : null}
+            {bankAccountNumber ? <CopyField label={t(language, { zh: "账号", en: "Account number" })} value={bankAccountNumber} language={language} /> : null}
+            {bankTransferNote ? <CopyField label={t(language, { zh: "备注", en: "Reference" })} value={bankTransferNote} language={language} /> : null}
+          </div>
+        ) : (
+          <p className="text-sm text-[#8c3a1f]">
+            {t(language, {
+              zh: "尚未设置汇款资料。请在 Vercel 或 .env.local 加入 BANK_ACCOUNT_NAME、BANK_ACCOUNT_NUMBER、BANK_BANK_NAME，可选 BANK_TRANSFER_NOTE。",
+              en: "Transfer details are not configured yet. Add BANK_ACCOUNT_NAME, BANK_ACCOUNT_NUMBER, BANK_BANK_NAME, and optional BANK_TRANSFER_NOTE in Vercel or .env.local."
+            })}
+          </p>
+        )}
+      </section>
+
       <section className="card space-y-3">
         <h2 className="font-display text-2xl">{t(language, { zh: "创建课程", en: "Create Course" })}</h2>
         <form action={createCourse} className="grid gap-3">

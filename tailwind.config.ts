@@ -14,7 +14,8 @@ const config: Config = {
         gold: "#c9a227"
       },
       fontFamily: {
-        display: ["'Fraunces'", "serif"],
+        display: ["'Noto Serif SC'", "'Source Han Serif SC'", "serif"],
+        accent: ["'Cormorant Garamond'", "serif"],
         body: ["'Work Sans'", "system-ui", "sans-serif"]
       }
     }

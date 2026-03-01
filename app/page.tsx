@@ -4,6 +4,8 @@ import FaqAccordion from "../components/FaqAccordion";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { currentMonthAnnouncements } from "../lib/metaenergy/announcements";
+import { t } from "../lib/i18n/shared";
+import { getCurrentLanguage } from "../lib/i18n/server";
 
 const valueCards = [
   {
@@ -52,6 +54,71 @@ const faqItems = [
 ];
 
 export default function HomePage() {
+  const language = getCurrentLanguage();
+  const valueCards = [
+    {
+      icon: "RM",
+      title: t(language, { zh: "分享之中，回馈自然发生", en: "Earn While You Share" }),
+      description: t(language, {
+        zh: "引荐关系稳定累积后，可逐步解锁最高 25% 的会员回馈。",
+        en: "Unlock up to 25% referral rewards as your community grows with you."
+      })
+    },
+    {
+      icon: "FX",
+      title: t(language, { zh: "体验之中，看见成长", en: "Experience & Grow" }),
+      description: t(language, {
+        zh: "个人频率报告、每周提醒与日常引导，帮助你持续校准自己的节奏。",
+        en: "Personal frequency reports, weekly reminders, and guided tools for everyday alignment."
+      })
+    },
+    {
+      icon: "PT",
+      title: t(language, { zh: "参与之中，累积礼遇", en: "Get Rewarded" }),
+      description: t(language, {
+        zh: "每次消费都能逐步累积积分，并在合适的时候兑换下一次体验。",
+        en: "Earn points on every purchase and redeem up to 50% of your next order."
+      })
+    }
+  ];
+  const faqItems = [
+    {
+      question: t(language, { zh: "引荐回馈是如何解锁的？", en: "How do referral rewards unlock?" }),
+      answer: t(language, {
+        zh: "引荐回馈会在累计引荐业绩达到 RM1,000、RM3,000 与 RM10,000 时依序解锁。若发生重置，则会从重置后的累计业绩重新开始计算。",
+        en: "Referral commission tiers unlock at RM1,000, RM3,000, and RM10,000 cumulative referred sales after any reset."
+      })
+    },
+    {
+      question: t(language, { zh: "刚跨过门槛的那一单，会立即用新的回馈比例吗？", en: "Does the threshold-crossing order earn the new rate?" }),
+      answer: t(language, {
+        zh: "不会。元象采用严格的不追溯规则。跨过门槛的当笔订单仍沿用原本层级，下一笔被归因的订单才会开始使用新的比例。",
+        en: "No. The threshold-crossing order still uses the previous tier rate. The next referred order uses the upgraded rate."
+      })
+    },
+    {
+      question: t(language, { zh: "每月维持资格的规则是什么？", en: "What is the keep-alive rule?" }),
+      answer: t(language, {
+        zh: "会员每月需要至少 RM50 的个人现金消费。若连续两个月低于 RM50，引荐层级与累计引荐业绩会归零，需重新累积。",
+        en: "Members must keep at least RM50 in monthly personal cash purchases. Two consecutive months below RM50 reset referral progress."
+      })
+    },
+    {
+      question: t(language, { zh: "积分是如何累积与使用的？", en: "How do points work?" }),
+      answer: t(language, {
+        zh: "每实际支付满 RM100 可获得 10 点积分。积分最多可抵扣订单金额的 50%，其余至少 50% 需以现金支付，积分不能兑换现金。",
+        en: "Members earn 10 points per full RM100 cash paid. Points can cover up to 50% of a purchase and cannot be exchanged for cash."
+      })
+    },
+    {
+      question: t(language, { zh: "这套会员系统适合谁？", en: "Who is this membership for?" }),
+      answer: t(language, {
+        zh: "它适合想用更清晰、更安定的方式体验频率工具、持续参与提醒内容，并在分享元象的过程中看见自己成长与回馈的人。",
+        en: "It is designed for people who want a clearer way to use frequency tools, stay engaged, and share MetaEnergy while seeing their rewards and progress."
+      })
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-[#f5f0e6]">
       <SiteHeader />
@@ -64,18 +131,24 @@ export default function HomePage() {
             <div className="grid gap-10 lg:grid-cols-[1.15fr,0.85fr] lg:items-center">
               <div className="space-y-7">
                 <span className="inline-flex rounded-full border border-white/15 bg-white/8 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#f0d78a]">
-                  元象能量会员系统 · Member Space
+                  {t(language, { zh: "元象能量会员系统 · 会员空间", en: "MetaEnergy Member System · Member Space" })}
                 </span>
                 <div className="space-y-4">
                   <h1 className="max-w-3xl font-display text-5xl leading-[0.95] text-white md:text-7xl">
-                    在安定之中，
+                    {t(language, { zh: "在安定之中，", en: "Unlock your frequency." })}
                     <br />
-                    看见你的积累与回响。
+                    {t(language, { zh: "看见你的积累与回响。", en: "Earn while you grow." })}
                   </h1>
                   <p className="max-w-2xl text-lg leading-8 text-white/72 md:text-xl">
-                    元象能量会员系统，以中文为主、体验为先。
+                    {t(language, {
+                      zh: "元象能量会员系统，以中文为主、体验为先。",
+                      en: "A calm membership space for frequency tools, rewards, and long-term participation."
+                    })}
                     <span className="block text-base text-white/58 md:text-lg">
-                      A calm member space for frequency tools, rewards, and long-term participation.
+                      {t(language, {
+                        zh: "English is available as a secondary language across the experience.",
+                        en: "Chinese-first by design, with English available as a secondary layer."
+                      })}
                     </span>
                   </p>
                 </div>
@@ -84,13 +157,13 @@ export default function HomePage() {
                     href="/register"
                     className="rounded-full bg-[#d4a940] px-7 py-3 text-sm font-semibold text-[#102116] transition hover:bg-[#e2bb56]"
                   >
-                    免费加入会员
+                    {t(language, { zh: "免费加入会员", en: "Start free membership" })}
                   </Link>
                   <a
                     href="#how-it-works"
                     className="rounded-full border border-white/20 bg-white/5 px-7 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    了解运作方式
+                    {t(language, { zh: "了解运作方式", en: "How it works" })}
                   </a>
                 </div>
                 <div className="grid gap-4 pt-2 md:grid-cols-2">
@@ -99,9 +172,9 @@ export default function HomePage() {
                     className="rounded-3xl border border-white/10 bg-white/8 p-5 transition hover:bg-white/12"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#f0d78a]">I want to</p>
-                    <p className="mt-3 font-display text-2xl">体验频率工具</p>
+                    <p className="mt-3 font-display text-2xl">{t(language, { zh: "体验频率工具", en: "Experience frequency tools" })}</p>
                     <p className="mt-2 text-sm text-white/65">
-                      报告、提醒与日常引导。
+                      {t(language, { zh: "报告、提醒与日常引导。", en: "Reports, reminders, and grounded guidance." })}
                       <span className="block text-white/45">Reports, reminders, and grounded guidance.</span>
                     </p>
                   </Link>
@@ -110,9 +183,9 @@ export default function HomePage() {
                     className="rounded-3xl border border-white/10 bg-white/8 p-5 transition hover:bg-white/12"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#f0d78a]">I want to</p>
-                    <p className="mt-3 font-display text-2xl">累积引荐回馈</p>
+                    <p className="mt-3 font-display text-2xl">{t(language, { zh: "累积引荐回馈", en: "Earn referral rewards" })}</p>
                     <p className="mt-2 text-sm text-white/65">
-                      清楚看见层级与业绩变化。
+                      {t(language, { zh: "清楚看见层级与业绩变化。", en: "Track tiers, sales progress, and reward momentum." })}
                       <span className="block text-white/45">Track tiers, sales progress, and reward momentum.</span>
                     </p>
                   </Link>

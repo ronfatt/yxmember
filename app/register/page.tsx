@@ -1,8 +1,12 @@
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import RegisterForm from "../../components/RegisterForm";
+import { t } from "../../lib/i18n/shared";
+import { getCurrentLanguage } from "../../lib/i18n/server";
 
 export default function RegisterPage() {
+  const language = getCurrentLanguage();
+
   return (
     <div className="min-h-screen overflow-hidden bg-[#f7f3ea]">
       <div className="pointer-events-none absolute inset-0">
@@ -15,27 +19,53 @@ export default function RegisterPage() {
         <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="lg:pr-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(201,162,39,0.35)] bg-white/65 px-4 py-2 backdrop-blur">
-              <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">元象能量会员系统</span>
+              <span className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]">
+                {t(language, { zh: "元象能量会员系统", en: "MetaEnergy Member System" })}
+              </span>
               <span className="h-1 w-1 rounded-full bg-[#c9a227]" />
-              <span className="text-xs text-black/60">Member Registration</span>
+              <span className="text-xs text-black/60">{t(language, { zh: "会员注册", en: "Member Registration" })}</span>
             </div>
 
             <h1 className="mt-6 font-display text-4xl leading-tight text-[#0f2f24] md:text-5xl">
-              开启你的会员旅程
+              {t(language, { zh: "开启你的会员旅程", en: "Begin your membership journey" })}
               <span className="mt-3 block text-2xl font-medium text-black/75 md:text-3xl">
-                在更安定的节奏里，开始累积你的参与与回响
+                {t(language, {
+                  zh: "在更安定的节奏里，开始累积你的参与与回响",
+                  en: "Start building your participation, profile, and rewards through a steadier rhythm"
+                })}
               </span>
             </h1>
 
             <p className="mt-5 max-w-xl text-base leading-7 text-black/68">
-              加入之后，你将拥有属于自己的会员空间。这里会记录你的频率档案、专属提醒、参与轨迹与逐步展开的会员礼遇。
+              {t(language, {
+                zh: "加入之后，你将拥有属于自己的会员空间。这里会记录你的频率档案、专属提醒、参与轨迹与逐步展开的会员礼遇。",
+                en: "Once you join, your member space keeps your frequency profile, reminders, participation history, and benefits in one place."
+              })}
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
-                { title: "轻松加入", detail: "使用 Email 即可建立你的专属会员档案" },
-                { title: "关系自动绑定", detail: "带推荐码注册时，系统会自动挂上引荐关系" },
-                { title: "内容持续更新", detail: "活动、提醒与报告都会集中留在这里" },
+                {
+                  title: t(language, { zh: "轻松加入", en: "Simple Entry" }),
+                  detail: t(language, {
+                    zh: "使用 Email 即可建立你的专属会员档案",
+                    en: "Create your member account with email and start immediately."
+                  })
+                },
+                {
+                  title: t(language, { zh: "关系自动绑定", en: "Referral Linking" }),
+                  detail: t(language, {
+                    zh: "带推荐码注册时，系统会自动挂上引荐关系",
+                    en: "Referral codes are attached automatically when present."
+                  })
+                },
+                {
+                  title: t(language, { zh: "内容持续更新", en: "Ongoing Content" }),
+                  detail: t(language, {
+                    zh: "活动、提醒与报告都会集中留在这里",
+                    en: "Reports, reminders, and campaign updates stay visible here."
+                  })
+                },
               ].map((item) => (
                 <div
                   key={item.title}
@@ -49,7 +79,7 @@ export default function RegisterPage() {
           </section>
 
           <section className="flex justify-center lg:justify-end">
-            <RegisterForm />
+            <RegisterForm language={language} />
           </section>
         </div>
       </main>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { createClient } from "../lib/supabase/client";
+import type { Language } from "../lib/i18n/shared";
 
 function getReferralCodeFromCookie() {
   if (typeof document === "undefined") return "";
@@ -16,7 +17,7 @@ function getReferralCodeFromCookie() {
   return cookie ? decodeURIComponent(cookie.split("=")[1] ?? "") : "";
 }
 
-export default function RegisterForm() {
+export default function RegisterForm({ language }: { language: Language }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
@@ -48,7 +49,7 @@ export default function RegisterForm() {
 
       if (error) throw error;
 
-      toast.success("Account created.");
+      toast.success(language === "en" ? "Account created." : "账号已创建。");
       if (data.session) {
         router.push("/dashboard");
       } else {
@@ -56,7 +57,7 @@ export default function RegisterForm() {
       }
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Register failed.");
+      toast.error(error instanceof Error ? error.message : language === "en" ? "Register failed." : "注册失败。");
     } finally {
       setLoading(false);
     }
@@ -64,13 +65,22 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full max-w-md rounded-[30px] border border-[rgba(201,162,39,0.35)] bg-white/75 p-8 shadow-[0_22px_70px_rgba(0,0,0,0.10)] backdrop-blur-xl">
-      <div className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]/80">Member Registration</div>
-      <div className="mt-2 font-display text-4xl text-[#0f2f24]">创建你的会员账号</div>
-      <div className="mt-2 text-sm leading-6 text-black/68">完成注册后，即可启用频率报告、积分累积与引荐关系绑定。</div>
+      <div className="text-xs font-semibold tracking-[0.28em] text-[#0f2f24]/80">
+        {language === "en" ? "Member Registration" : "会员注册"}
+      </div>
+      <div className="mt-2 font-display text-4xl text-[#0f2f24]">
+        {language === "en" ? "Create your membership account" : "创建你的会员账号"}
+      </div>
+      <div className="mt-2 text-sm leading-6 text-black/68">
+        {language === "en"
+          ? "Complete registration to unlock frequency reports, points, and referral linking."
+          : "完成注册后，即可启用频率报告、积分累积与引荐关系绑定。"}
+      </div>
 
       {referralCode ? (
         <div className="mt-5 rounded-[22px] border border-[rgba(15,47,36,0.12)] bg-[#0f2f24]/6 px-4 py-3 text-sm text-[#123524]">
-          你将透过这个推荐码加入：<span className="font-semibold">{referralCode}</span>
+          {language === "en" ? "You are joining with referral code: " : "你将透过这个推荐码加入："}
+          <span className="font-semibold">{referralCode}</span>
         </div>
       ) : null}
 
@@ -82,12 +92,12 @@ export default function RegisterForm() {
         }}
       >
         <label className="block">
-          <span className="text-xs font-medium text-[#0f2f24]/80">姓名</span>
+          <span className="text-xs font-medium text-[#0f2f24]/80">{language === "en" ? "Full name" : "姓名"}</span>
           <div className="mt-2 rounded-[20px] border border-[rgba(201,162,39,0.25)] bg-[#fbf8f1] transition focus-within:border-[rgba(201,162,39,0.55)] focus-within:ring-4 focus-within:ring-[rgba(201,162,39,0.18)]">
             <input
               className="w-full bg-transparent px-4 py-3.5 text-[#0f2f24] outline-none"
               type="text"
-              placeholder="请输入你的姓名"
+              placeholder={language === "en" ? "Enter your full name" : "请输入你的姓名"}
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
@@ -95,7 +105,7 @@ export default function RegisterForm() {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium text-[#0f2f24]/80">生日</span>
+          <span className="text-xs font-medium text-[#0f2f24]/80">{language === "en" ? "Birthday" : "生日"}</span>
           <div className="mt-2 rounded-[20px] border border-[rgba(201,162,39,0.25)] bg-[#fbf8f1] transition focus-within:border-[rgba(201,162,39,0.55)] focus-within:ring-4 focus-within:ring-[rgba(201,162,39,0.18)]">
             <input
               className="w-full bg-transparent px-4 py-3.5 text-[#0f2f24] outline-none"
@@ -120,12 +130,12 @@ export default function RegisterForm() {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium text-[#0f2f24]/80">密码</span>
+          <span className="text-xs font-medium text-[#0f2f24]/80">{language === "en" ? "Password" : "密码"}</span>
           <div className="mt-2 rounded-[20px] border border-[rgba(201,162,39,0.25)] bg-[#fbf8f1] transition focus-within:border-[rgba(201,162,39,0.55)] focus-within:ring-4 focus-within:ring-[rgba(201,162,39,0.18)]">
             <input
               className="w-full bg-transparent px-4 py-3.5 text-[#0f2f24] outline-none"
               type="password"
-              placeholder="设置你的登录密码"
+              placeholder={language === "en" ? "Create your password" : "设置你的登录密码"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -137,14 +147,14 @@ export default function RegisterForm() {
           disabled={loading}
           className="mt-1 w-full rounded-[20px] bg-[linear-gradient(135deg,#e6cc73,#c9a227,#b4881b)] py-3.5 text-sm font-semibold text-[#0f2f24] shadow-[0_14px_30px_rgba(201,162,39,0.25)] transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? "创建中..." : "开始加入会员"}
+          {loading ? (language === "en" ? "Creating..." : "创建中...") : language === "en" ? "Start membership" : "开始加入会员"}
         </button>
 
         <div className="flex items-center justify-between gap-4 pt-1 text-sm">
           <Link href="/login" className="text-[#0f2f24]/75 underline underline-offset-4 hover:text-[#0f2f24]">
-            已有账号？去登入
+            {language === "en" ? "Already a member? Sign in" : "已有账号？去登入"}
           </Link>
-          <span className="text-black/45">推荐关系会安全保留</span>
+          <span className="text-black/45">{language === "en" ? "Referral relationships stay intact" : "推荐关系会安全保留"}</span>
         </div>
       </form>
     </div>

@@ -32,21 +32,28 @@ export default async function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-black/10 bg-white/80 backdrop-blur">
-      <div className="container flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
-        <Link href="/" className="font-display text-2xl text-[#123524]">
+    <header className="border-b border-black/5 bg-white/60 backdrop-blur-xl">
+      <div className="container flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
+        <Link href="/" className="font-display text-xl text-[#0f2f25] md:text-2xl">
           {t(language, { zh: "元象能量会员系统", en: "MetaEnergy Member System" })}
         </Link>
-        <div className="flex flex-wrap items-center gap-3 md:justify-end">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <LanguageSwitcher currentLanguage={language} />
-          <nav className="flex flex-wrap items-center gap-5 text-sm font-medium">
+          <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-black/62">
             {links.map((link) => (
-              <Link key={link.href} href={link.href} className="hover:text-jade">
+              <Link key={link.href} href={link.href} className="transition hover:text-[#0f2f25]">
                 {link.label}
               </Link>
             ))}
-            {showAdmin ? <Link href="/admin/orders">{t(language, { zh: "后台", en: "Admin" })}</Link> : null}
-            <Link href={user ? "/dashboard" : "/login"} className="rounded-full bg-[#123524] px-4 py-2 text-white">
+            {showAdmin ? (
+              <Link href="/admin/orders" className="transition hover:text-[#0f2f25]">
+                {t(language, { zh: "后台", en: "Admin" })}
+              </Link>
+            ) : null}
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className="rounded-full border border-[rgba(15,47,37,0.08)] bg-[#0f2f25] px-4 py-2 text-xs font-semibold tracking-[0.12em] text-white transition hover:opacity-90"
+            >
               {user
                 ? t(language, { zh: "进入会员中心", en: "Go to Dashboard" })
                 : t(language, { zh: "会员登入", en: "Member Login" })}

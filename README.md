@@ -129,6 +129,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/admin/courses`
 - `/admin/accounts`
 - `/admin/products`
+- `/admin/inventory`
 
 ## Mentor booking MVP
 
@@ -201,6 +202,11 @@ The admin backend also supports:
   - manage product SKU, MYR price, stock count, inventory tracking, and preorder allowance
   - record stock movements such as stock-in, stock-out, and stocktake adjustments
   - product orders created from `/admin/orders` can now deduct stock automatically
+- `/admin/inventory`
+  - dedicated inventory management page for:
+    - viewing current stock
+    - entering stock in / stock out / stocktake adjustments
+    - reviewing recent stock movement history
 
 Member/public display:
 

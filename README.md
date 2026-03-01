@@ -36,6 +36,7 @@ Run the Supabase SQL migrations in order:
 4. [`supabase/migrations/0004_frequency_rituals.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0004_frequency_rituals.sql)
 5. [`supabase/migrations/0005_admin_accounts_and_stock.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0005_admin_accounts_and_stock.sql)
 6. [`supabase/migrations/0006_stock_movements.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0006_stock_movements.sql)
+7. [`supabase/migrations/0007_product_order_inventory.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0007_product_order_inventory.sql)
 
 `0002_metaenergy_mvp.sql` adds:
 
@@ -199,6 +200,7 @@ The admin backend also supports:
 - `/admin/products`
   - manage product SKU, MYR price, stock count, inventory tracking, and preorder allowance
   - record stock movements such as stock-in, stock-out, and stocktake adjustments
+  - product orders created from `/admin/orders` can now deduct stock automatically
 
 Member/public display:
 
@@ -206,7 +208,7 @@ Member/public display:
   - prefers active `payment_accounts` from the database
   - falls back to `BANK_*` env vars only if no active account exists
 - `/products`
-  - shows inventory state such as in stock, preorder, or out of stock
+  - shows inventory state such as in stock, preorder, out of stock, and low-stock warnings
 
 ## Vercel deployment
 

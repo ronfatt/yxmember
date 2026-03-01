@@ -39,18 +39,22 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const statusFilter = ["all", "PAID", "REFUNDED"].includes(searchParams?.status ?? "") ? searchParams?.status ?? "all" : "all";
   const limit = Math.min(Math.max(Number(searchParams?.limit ?? "20"), 5), 100);
 
-  const [{ data: users }, { data: allOrders }, { data: referralOrders }] = await Promise.all([
+  const [{ data: users }, { data: allOrders }, { data: referralOrders }, { data: products }] = await Promise.all([
     admin.from("users_profile").select("id,name,referral_code,referred_by").order("created_at", { ascending: false }),
     admin
       .from("orders")
-      .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at,payment_status")
+      .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at,payment_status,product_id,quantity")
       .order("created_at", { ascending: false })
       .limit(limit),
     admin
       .from("referral_orders")
       .select("id,order_id,commission_rate,commission_amount,referrer_id,referred_user_id,created_at")
       .order("created_at", { ascending: false })
-      .limit(limit)
+      .limit(limit),
+    admin
+      .from("products")
+      .select("id,title,price_myr,stock_on_hand,track_inventory,allow_backorder")
+      .order("created_at", { ascending: false })
   ]);
 
   const userMap = new Map(
@@ -64,6 +68,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   );
 
   const referralOrderMap = new Map((referralOrders ?? []).map((entry) => [entry.order_id, entry]));
+  const productMap = new Map((products ?? []).map((product) => [product.id, product]));
   const normalizedBuyerFilter = buyerFilter.trim().toLowerCase();
   const normalizedReferrerFilter = referrerFilter.trim().toLowerCase();
 
@@ -112,7 +117,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "创建已支付订单", en: "Create paid order" })}</h2>
           <p className="text-sm text-black/60">{t(language, { zh: "推荐订单的回馈比例，会使用这张订单写入前的上级层级。", en: "Referred orders credit commission using the referrer tier before this order updates cumulative sales." })}</p>
         </div>
-        <AdminOrderForm users={users ?? []} language={language} />
+        <AdminOrderForm users={users ?? []} products={products ?? []} language={language} />
       </div>
 
       <div className="card space-y-4">
@@ -177,6 +182,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     <p className="text-xs uppercase tracking-wide text-black/45">
                       {order.order_type} | {order.payment_status}
                     </p>
+                    {order.order_type === "product" && order.product_id ? (
+                      <p className="text-xs text-black/55">
+                        {(productMap.get(order.product_id)?.title ?? t(language, { zh: "产品", en: "Product" }))} · {t(language, { zh: "数量", en: "Qty" })} {order.quantity ?? 1}
+                      </p>
+                    ) : null}
                   </div>
                   <p className="text-[#123524]">{formatMoney(Number(order.amount_total))}</p>
                 </div>

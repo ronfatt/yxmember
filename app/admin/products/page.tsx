@@ -162,6 +162,11 @@ export default async function AdminProductsPage() {
                   <div>
                     <p className="font-medium">{product.title}</p>
                     <p className="text-xs text-black/50">{product.subtitle}</p>
+                    {product.track_inventory && Number(product.stock_on_hand ?? 0) <= 5 ? (
+                      <p className="mt-1 text-xs font-medium text-[#8c3a1f]">
+                        {t(language, { zh: `低库存提醒：当前剩余 ${product.stock_on_hand}`, en: `Low stock warning: ${product.stock_on_hand} left` })}
+                      </p>
+                    ) : null}
                   </div>
                   <input type="hidden" name="id" value={product.id} />
                   <select name="is_published" defaultValue={String(product.is_published)} className="rounded border p-2 text-sm">

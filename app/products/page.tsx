@@ -33,9 +33,16 @@ export default async function ProductsPage() {
                   ) : null}
                   {product.track_inventory ? (
                     product.stock_on_hand > 0 ? (
-                      <span className="rounded-full bg-[#edf5ef] px-3 py-1 text-jade">
-                        {t(language, { zh: `现货 ${product.stock_on_hand}`, en: `${product.stock_on_hand} in stock` })}
-                      </span>
+                      <>
+                        <span className="rounded-full bg-[#edf5ef] px-3 py-1 text-jade">
+                          {t(language, { zh: `现货 ${product.stock_on_hand}`, en: `${product.stock_on_hand} in stock` })}
+                        </span>
+                        {product.stock_on_hand <= 5 ? (
+                          <span className="rounded-full bg-[#fff4e8] px-3 py-1 text-[#8c3a1f]">
+                            {t(language, { zh: "低库存", en: "Low stock" })}
+                          </span>
+                        ) : null}
+                      </>
                     ) : product.allow_backorder ? (
                       <span className="rounded-full bg-[#f7f2e7] px-3 py-1 text-[#8b6b2b]">
                         {t(language, { zh: "可预订", en: "Available for preorder" })}

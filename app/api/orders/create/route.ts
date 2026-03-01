@@ -13,6 +13,8 @@ export async function POST(request: Request) {
       amountTotal: Number(payload.amountTotal),
       pointsRedeemed: Number(payload.pointsRedeemed ?? 0),
       orderType: payload.orderType,
+      productId: payload.productId ? String(payload.productId) : null,
+      quantity: payload.quantity ? Number(payload.quantity) : 1,
       referrerId: payload.referrerId ? String(payload.referrerId) : null,
       referredUserId: payload.referredUserId ? String(payload.referredUserId) : null
     });

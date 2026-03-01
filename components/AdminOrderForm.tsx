@@ -12,11 +12,22 @@ type UserOption = {
   referred_by: string | null;
 };
 
+type ProductOption = {
+  id: string;
+  title: string;
+  price_myr: number | null;
+  stock_on_hand: number;
+  track_inventory: boolean;
+  allow_backorder: boolean;
+};
+
 export default function AdminOrderForm({
   users,
+  products,
   language
 }: {
   users: UserOption[];
+  products: ProductOption[];
   language: Language;
 }) {
   const router = useRouter();
@@ -25,15 +36,27 @@ export default function AdminOrderForm({
   const [amountTotal, setAmountTotal] = useState("100");
   const [pointsRedeemed, setPointsRedeemed] = useState("0");
   const [orderType, setOrderType] = useState<"personal" | "service" | "product">("product");
+  const [productId, setProductId] = useState(products[0]?.id ?? "");
+  const [quantity, setQuantity] = useState("1");
   const [referrerId, setReferrerId] = useState("");
   const selectedUser = users.find((user) => user.id === userId);
   const inferredReferrerId = selectedUser?.referred_by ?? "";
   const selectedReferrer = users.find((user) => user.id === (referrerId || inferredReferrerId));
   const source = inferredReferrerId ? "referred" : "personal";
+  const selectedProduct = products.find((product) => product.id === productId);
 
   useEffect(() => {
     setReferrerId(inferredReferrerId);
   }, [inferredReferrerId]);
+
+  useEffect(() => {
+    if (orderType !== "product") return;
+    const qty = Math.max(1, Number(quantity || 1));
+    const unitPrice = Number(selectedProduct?.price_myr ?? 0);
+    if (unitPrice > 0) {
+      setAmountTotal(String((unitPrice * qty).toFixed(2)));
+    }
+  }, [orderType, productId, quantity, selectedProduct?.price_myr]);
 
   const handleSubmit = async () => {
     const payload = {
@@ -41,6 +64,8 @@ export default function AdminOrderForm({
       amountTotal: Number(amountTotal),
       pointsRedeemed: Number(pointsRedeemed),
       orderType,
+      productId: orderType === "product" ? productId : null,
+      quantity: orderType === "product" ? Number(quantity) : 1,
       referrerId: source === "referred" ? (referrerId || inferredReferrerId) : null,
       referredUserId: source === "referred" ? userId : null
     };
@@ -113,6 +138,34 @@ export default function AdminOrderForm({
             <option value="product">{language === "en" ? "product" : "产品"}</option>
           </select>
         </label>
+        {orderType === "product" ? (
+          <>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-black/65">{language === "en" ? "Product" : "产品"}</span>
+              <select
+                className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+                value={productId}
+                onChange={(event) => setProductId(event.target.value)}
+              >
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-black/65">{language === "en" ? "Quantity" : "数量"}</span>
+              <input
+                className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+            </label>
+          </>
+        ) : null}
         <label className="space-y-2 text-sm">
           <span className="font-medium text-black/65">{language === "en" ? "Order source" : "订单归因"}</span>
           <div className="w-full rounded-2xl border border-black/10 bg-[#f8f6f2] px-4 py-3">
@@ -147,6 +200,33 @@ export default function AdminOrderForm({
       <div className="rounded-2xl border border-black/10 bg-[#f8f6f2] px-4 py-3 text-sm text-black/65">
         {language === "en" ? "Buyer: " : "购买会员："}
         <span className="font-medium text-[#123524]">{selectedUser?.name ?? (language === "en" ? "Member" : "会员")} ({selectedUser?.referral_code ?? "-"})</span>.
+        {orderType === "product" && selectedProduct ? (
+          <>
+            {" "}{language === "en" ? "Product: " : "产品："}
+            <span className="font-medium text-[#123524]">{selectedProduct.title}</span>
+            {" · "}
+            {language === "en" ? "Qty " : "数量 "}
+            <span className="font-medium text-[#123524]">{quantity}</span>.
+            {" "}
+            {selectedProduct.track_inventory ? (
+              selectedProduct.stock_on_hand <= 5 ? (
+                <span className="text-[#8c3a1f]">
+                  {language === "en"
+                    ? `Low stock warning: ${selectedProduct.stock_on_hand} left.`
+                    : `低库存提醒：目前只剩 ${selectedProduct.stock_on_hand}。`}
+                </span>
+              ) : (
+                <span>
+                  {language === "en"
+                    ? `Current stock: ${selectedProduct.stock_on_hand}.`
+                    : `当前库存：${selectedProduct.stock_on_hand}。`}
+                </span>
+              )
+            ) : (
+              <span>{language === "en" ? "Inventory tracking is off for this product." : "这个产品目前不追踪库存。"}</span>
+            )}
+          </>
+        ) : null}
         {source === "referred" ? (
           <>
             {" "}{language === "en" ? "Referrer: " : "上级推荐人："}

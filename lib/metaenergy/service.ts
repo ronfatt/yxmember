@@ -7,6 +7,8 @@ type CreateOrderInput = {
   amountTotal: number;
   pointsRedeemed?: number;
   orderType: "personal" | "service" | "product";
+  productId?: string | null;
+  quantity?: number;
   referrerId?: string | null;
   referredUserId?: string | null;
 };
@@ -129,6 +131,7 @@ async function recalculateReferrerMetrics(admin: SupabaseClient, referrerId: str
 export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderInput) {
   const amountTotal = Number(input.amountTotal);
   const requestedPoints = Math.max(0, Math.floor(Number(input.pointsRedeemed ?? 0)));
+  const quantity = Math.max(1, Math.trunc(Number(input.quantity ?? 1)));
 
   const { data: buyerProfile, error: buyerError } = await admin
     .from("users_profile")
@@ -160,12 +163,37 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
   const pointsRedeemed = Math.min(requestedPoints, safePoints);
   const cashPaid = calcCashPaid(amountTotal, pointsRedeemed);
   const earnedPoints = calcEarnedPoints(cashPaid);
+  let product: { id: string; title: string; stock_on_hand: number; track_inventory: boolean; allow_backorder: boolean } | null = null;
+
+  if (input.orderType === "product") {
+    if (!input.productId) {
+      throw new Error("Product orders require a selected product.");
+    }
+
+    const { data: foundProduct, error: productError } = await admin
+      .from("products")
+      .select("id,title,stock_on_hand,track_inventory,allow_backorder")
+      .eq("id", input.productId)
+      .single();
+
+    if (productError || !foundProduct) {
+      throw productError ?? new Error("Product not found.");
+    }
+
+    product = foundProduct;
+
+    if (foundProduct.track_inventory && !foundProduct.allow_backorder && Number(foundProduct.stock_on_hand ?? 0) < quantity) {
+      throw new Error("Not enough stock for this product order.");
+    }
+  }
 
   const { data: order, error: orderError } = await admin
     .from("orders")
     .insert({
       user_id: input.userId,
       order_type: input.orderType,
+      product_id: product?.id ?? null,
+      quantity,
       amount_total: amountTotal,
       cash_paid: cashPaid,
       points_redeemed: pointsRedeemed,
@@ -215,6 +243,29 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
     .eq("id", input.userId);
 
   if (pointsError) throw pointsError;
+
+  if (product?.track_inventory) {
+    const nextStock = Math.max(0, Number(product.stock_on_hand ?? 0) - quantity);
+    const { error: stockUpdateError } = await admin
+      .from("products")
+      .update({
+        stock_on_hand: nextStock,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", product.id);
+
+    if (stockUpdateError) throw stockUpdateError;
+
+    const { error: movementError } = await admin.from("stock_movements").insert({
+      product_id: product.id,
+      movement_type: "out",
+      quantity,
+      note: `Order ${order.id}: sold to member`,
+      created_by: input.userId
+    });
+
+    if (movementError) throw movementError;
+  }
 
   await updateMonthlyStats(admin, input.userId, order.created_at);
 
@@ -370,7 +421,7 @@ export async function updateMemberUpstream(admin: SupabaseClient, memberId: stri
 export async function reverseMetaOrder(admin: SupabaseClient, orderId: string) {
   const { data: order, error: orderError } = await admin
     .from("orders")
-    .select("id,user_id,payment_status,created_at,cash_paid,points_redeemed")
+    .select("id,user_id,payment_status,created_at,cash_paid,points_redeemed,order_type,product_id,quantity")
     .eq("id", orderId)
     .single();
 
@@ -462,6 +513,37 @@ export async function reverseMetaOrder(admin: SupabaseClient, orderId: string) {
 
     if (deleteReferralError) throw deleteReferralError;
     await recalculateReferrerMetrics(admin, referralOrder.referrer_id);
+  }
+
+  if (order.order_type === "product" && order.product_id) {
+    const { data: product } = await admin
+      .from("products")
+      .select("id,stock_on_hand,track_inventory")
+      .eq("id", order.product_id)
+      .single();
+
+    if (product?.track_inventory) {
+      const restoreQuantity = Math.max(1, Number(order.quantity ?? 1));
+      const { error: restoreError } = await admin
+        .from("products")
+        .update({
+          stock_on_hand: Number(product.stock_on_hand ?? 0) + restoreQuantity,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", product.id);
+
+      if (restoreError) throw restoreError;
+
+      const { error: movementError } = await admin.from("stock_movements").insert({
+        product_id: product.id,
+        movement_type: "in",
+        quantity: restoreQuantity,
+        note: `Order ${orderId}: stock restored after reversal`,
+        created_by: order.user_id
+      });
+
+      if (movementError) throw movementError;
+    }
   }
 
   await updateMonthlyStats(admin, order.user_id, order.created_at);

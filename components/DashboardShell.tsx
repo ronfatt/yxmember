@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LogoutButton from "./LogoutButton";
 
 const links = [
   { href: "/dashboard", label: "Overview" },
@@ -25,7 +26,7 @@ export default function DashboardShell({
             <h1 className="font-display text-4xl text-[#123524]">{title}</h1>
             <p className="text-sm text-black/65">{subtitle}</p>
           </div>
-          <nav className="flex flex-wrap gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -35,7 +36,8 @@ export default function DashboardShell({
                 {link.label}
               </Link>
             ))}
-          </nav>
+            <LogoutButton />
+          </div>
         </div>
       </header>
       <main className="container py-8">{children}</main>

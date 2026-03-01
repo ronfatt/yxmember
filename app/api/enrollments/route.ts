@@ -3,6 +3,7 @@ import { createClient } from "../../../lib/supabase/server";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 import { enrollmentSchema } from "../../../lib/zod";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
+import { renderProgramEmail, sendEmail } from "../../../lib/notifications/email";
 
 export async function POST(request: Request) {
   const language = getCurrentLanguage();
@@ -21,13 +22,19 @@ export async function POST(request: Request) {
   const admin = supabaseAdmin();
   const { data: session } = await admin
     .from("course_sessions")
-    .select("id,course_id,price_cents,currency,status")
+    .select("id,course_id,price_cents,currency,status,start_at,venue_name")
     .eq("id", parsed.data.course_session_id)
     .single();
 
   if (!session) {
     return NextResponse.json({ error: language === "en" ? "Session not found." : "找不到这个课程场次。" }, { status: 404 });
   }
+
+  const { data: course } = await admin
+    .from("courses")
+    .select("title")
+    .eq("id", session.course_id)
+    .maybeSingle();
 
   if (session.status !== "PUBLISHED") {
     return NextResponse.json({ error: language === "en" ? "This session is not open for booking yet." : "这个场次暂时还不能报名。" }, { status: 400 });
@@ -81,11 +88,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: processError.message }, { status: 400 });
     }
 
+    if (auth.user.email) {
+      await sendEmail({
+        to: auth.user.email,
+        subject: language === "en" ? "Your MetaEnergy reservation is confirmed" : "你的元象课程席位已确认",
+        html: renderProgramEmail({
+          heading: language === "en" ? "Your seat is confirmed" : "你的席位已确认",
+          intro:
+            language === "en"
+              ? "Your reservation has been confirmed. We look forward to welcoming you into this experience."
+              : "你的报名已确认。我们期待在这次体验中迎接你的到来。",
+          lines: [
+            `${language === "en" ? "Program" : "课程 / 活动"}：${course?.title ?? "-"}`,
+            `${language === "en" ? "Session time" : "场次时间"}：${new Date(session.start_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}`,
+            `${language === "en" ? "Venue" : "地点"}：${session.venue_name || (language === "en" ? "To be announced" : "待公布")}`
+          ]
+        })
+      }).catch(() => null);
+    }
+
     return NextResponse.json({
       order_id: order.id,
       payment_status: "PAID",
       requires_slip: false
     });
+  }
+
+  if (auth.user.email) {
+    await sendEmail({
+      to: auth.user.email,
+      subject: language === "en" ? "Upload your transfer slip to complete reservation" : "请上传汇款单据以完成报名",
+      html: renderProgramEmail({
+        heading: language === "en" ? "Your reservation has been created" : "你的报名订单已建立",
+        intro:
+          language === "en"
+            ? "To secure this seat, please complete your bank transfer and upload the slip in your member dashboard."
+            : "若要锁定席位，请完成银行转账，并到会员中心上传汇款单据。",
+        lines: [
+          `${language === "en" ? "Program" : "课程 / 活动"}：${course?.title ?? "-"}`,
+          `${language === "en" ? "Session time" : "场次时间"}：${new Date(session.start_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}`,
+          `${language === "en" ? "Amount due" : "需汇款金额"}：${price.toFixed(2)} ${session.currency}`
+        ]
+      })
+    }).catch(() => null);
   }
 
   return NextResponse.json({

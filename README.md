@@ -19,6 +19,8 @@ Copy [`.env.example`](/Users/rms/Desktop/元像/yuanxiang%20app/.env.example) to
 - `NEXT_PUBLIC_SITE_URL`
 - `ADMIN_EMAIL_ALLOWLIST`
 - `CRON_SECRET`
+- `RESEND_API_KEY` (optional, for program reservation emails)
+- `EMAIL_FROM` (optional sender for reservation emails)
 
 ## Database setup
 
@@ -80,6 +82,12 @@ Open [http://localhost:3000](http://localhost:3000).
   - Admin route to settle an appointment and create a paid `service` order
 - `POST /api/admin/appointments/cancel`
   - Admin route to cancel an appointment
+- `POST /api/enrollments`
+  - Authenticated member route to create a free or paid course/program reservation
+  - Free sessions are auto-confirmed
+  - Paid sessions create a pending bank-transfer order
+- `POST /api/orders/slip`
+  - Authenticated member route to attach a transfer slip to a pending order
 
 ## Business rules implemented
 
@@ -99,6 +107,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Dashboard routes
 
 - `/dashboard`
+- `/dashboard/programs`
 - `/dashboard/appointments`
 - `/dashboard/referrals`
 - `/dashboard/points`
@@ -109,6 +118,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/admin/appointments`
 - `/admin/mentors`
 - `/admin/orders`
+- `/admin/courses`
 
 ## Mentor booking MVP
 
@@ -140,6 +150,35 @@ When an admin marks an appointment as paid, the app creates a normal `service` o
 - points earning and redemption still apply
 - personal monthly spend still updates
 - referral attribution and commission still apply for downlines
+
+## Programs and events
+
+This repository also supports member-facing course and event enrollment:
+
+- `/courses`
+  - public listing for published courses and activities
+- `/courses/[id]`
+  - public detail page with published sessions
+- `/dashboard/programs`
+  - member-only page to:
+    - review available programs
+    - see pending reservations
+    - upload bank transfer slips for paid sessions
+- `/admin/courses`
+  - admin page to:
+    - create courses
+    - create sessions
+    - publish sessions
+    - review transfer slips
+    - mark paid reservations as confirmed
+
+Email notes:
+
+- If `RESEND_API_KEY` and `EMAIL_FROM` are set, the app sends reservation emails for:
+  - free program confirmations
+  - paid reservation instructions
+  - transfer-approved confirmations
+- If those env vars are omitted, the enrollment flow still works and email sending is skipped safely.
 
 ## Vercel deployment
 

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
+import { renderProgramEmail, sendEmail } from "../../../lib/notifications/email";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 async function createCourse(formData: FormData) {
@@ -65,6 +66,29 @@ async function approveCourseTransfer(formData: FormData) {
   const admin = supabaseAdmin();
   const orderId = String(formData.get("order_id"));
 
+  const { data: order } = await admin
+    .from("orders")
+    .select("id,user_id,amount_total,currency,course_session_id")
+    .eq("id", orderId)
+    .single();
+
+  if (!order) {
+    return;
+  }
+
+  const [{ data: member }, { data: session }] = await Promise.all([
+    admin.from("users").select("email,name").eq("id", order.user_id).maybeSingle(),
+    admin
+      .from("course_sessions")
+      .select("id,start_at,venue_name,course_id")
+      .eq("id", order.course_session_id)
+      .maybeSingle()
+  ]);
+
+  const { data: course } = session
+    ? await admin.from("courses").select("title").eq("id", session.course_id).maybeSingle()
+    : { data: null };
+
   await admin.rpc("process_paid_order", {
     order_id_input: orderId,
     payment_intent_input: "BANK_TRANSFER_REVIEWED"
@@ -77,6 +101,23 @@ async function approveCourseTransfer(formData: FormData) {
       reviewed_by: adminUser.id
     })
     .eq("id", orderId);
+
+  if (member?.email) {
+    await sendEmail({
+      to: member.email,
+      subject: "你的元象课程席位已确认",
+      html: renderProgramEmail({
+        heading: "你的席位已确认",
+        intro: "我们已经确认收到你的汇款，这次课程 / 活动的席位已经为你保留。",
+        lines: [
+          `课程 / 活动：${course?.title ?? "-"}`,
+          `场次时间：${session ? new Date(session.start_at).toLocaleString("zh-CN") : "-"}`,
+          `地点：${session?.venue_name || "待公布"}`,
+          `确认金额：${Number(order.amount_total ?? 0).toFixed(2)} ${order.currency}`
+        ]
+      })
+    }).catch(() => null);
+  }
 
   revalidatePath("/admin/courses");
   revalidatePath("/dashboard/programs");

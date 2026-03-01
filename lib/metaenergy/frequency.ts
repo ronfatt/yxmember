@@ -28,7 +28,18 @@ export type WeeklyReminder = {
   priorityList: string[];
   boundaryNote: string;
   reflectionPrompt: string;
+  weeklyContext: {
+    orderCount: number;
+    personalCashSpent: number;
+    referredOrderCount: number;
+  };
   content: string;
+};
+
+export type WeeklyReminderContext = {
+  orderCount: number;
+  personalCashSpent: number;
+  referredOrderCount: number;
 };
 
 function sumDigits(value: string) {
@@ -156,7 +167,10 @@ export function buildFrequencyReport(birthday: string): FrequencyReport {
   };
 }
 
-export function buildWeeklyReminder(report: Partial<FrequencyReport>): WeeklyReminder {
+export function buildWeeklyReminder(
+  report: Partial<FrequencyReport>,
+  context: WeeklyReminderContext
+): WeeklyReminder {
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const band = getBand(report.lifePath ?? 5, report.focus ?? 5);
   const content = getBandContent(band);
@@ -169,8 +183,26 @@ export function buildWeeklyReminder(report: Partial<FrequencyReport>): WeeklyRem
           ? "Hold alignment and boundaries"
           : "Move from insight into execution";
 
-  const focusTheme = report.summary ?? content.summary;
-  const priorityList = content.actionPlan.slice(0, 3);
+  const contextualTheme =
+    context.orderCount === 0
+      ? "This week needs activation: no paid orders have been recorded yet, so momentum must come from one concrete revenue move."
+      : context.personalCashSpent < 50
+        ? "Your weekly cashflow is still light. Focus on direct follow-through and personal conversion, not passive planning."
+        : context.referredOrderCount > 0
+          ? "Referral activity is present this week. Protect execution quality so relationship momentum turns into stable repeat sales."
+          : report.summary ?? content.summary;
+
+  const priorityList = [...content.actionPlan];
+  if (context.orderCount === 0) {
+    priorityList[0] = "Create one paid order this week before adding any new experiments.";
+  }
+  if (context.personalCashSpent < 50) {
+    priorityList[1] = "Prioritize one direct personal sale to keep your cash activity healthy.";
+  }
+  if (context.referredOrderCount > 0) {
+    priorityList[2] = "Follow up with active downlines while their buying intent is still warm.";
+  }
+
   const boundaryNote =
     band === "harmonizer"
       ? "Do not accept extra emotional load before your own priorities are complete."
@@ -179,6 +211,10 @@ export function buildWeeklyReminder(report: Partial<FrequencyReport>): WeeklyRem
         : band === "initiator"
           ? "Do not split attention across too many starts."
           : "Do not wait for perfect clarity before acting.";
+  const contextualBoundary =
+    context.personalCashSpent < 50
+      ? `${boundaryNote} Also, do not confuse admin work with actual revenue-producing action.`
+      : boundaryNote;
   const reflectionPrompt =
     band === "analyst"
       ? "What one insight must become a visible result this week?"
@@ -187,14 +223,19 @@ export function buildWeeklyReminder(report: Partial<FrequencyReport>): WeeklyRem
         : band === "harmonizer"
           ? "Where do you need truth more than comfort right now?"
           : "What would simplify your next move immediately?";
+  const contextualReflection =
+    context.referredOrderCount > 0
+      ? `${reflectionPrompt} Which downline relationship needs immediate follow-up?`
+      : reflectionPrompt;
 
   return {
     weekStart: format(weekStart, "yyyy-MM-dd"),
     headline,
-    focusTheme,
+    focusTheme: contextualTheme,
     priorityList,
-    boundaryNote,
-    reflectionPrompt,
-    content: `${headline}. ${focusTheme} Priorities: ${priorityList.join("; ")}. Boundary: ${boundaryNote} Reflection: ${reflectionPrompt}`
+    boundaryNote: contextualBoundary,
+    reflectionPrompt: contextualReflection,
+    weeklyContext: context,
+    content: `${headline}. ${contextualTheme} Priorities: ${priorityList.join("; ")}. Boundary: ${contextualBoundary} Reflection: ${contextualReflection}`
   };
 }

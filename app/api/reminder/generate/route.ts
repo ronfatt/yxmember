@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { endOfWeek, startOfWeek } from "date-fns";
 import { requireUser } from "../../../../lib/actions/session";
 import { buildWeeklyReminder } from "../../../../lib/metaenergy/frequency";
 import { createClient } from "../../../../lib/supabase/server";
@@ -20,7 +21,33 @@ export async function POST() {
       throw reportError;
     }
 
-    const reminder = buildWeeklyReminder((latestReport?.report_json as Record<string, unknown>) ?? {});
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("id,cash_paid,created_at")
+      .eq("user_id", user.id)
+      .eq("payment_status", "PAID")
+      .gte("created_at", weekStart.toISOString())
+      .lte("created_at", weekEnd.toISOString());
+
+    if (ordersError) throw ordersError;
+
+    const { data: referralOrders, error: referralOrdersError } = await supabase
+      .from("referral_orders")
+      .select("id,created_at")
+      .eq("referrer_id", user.id)
+      .gte("created_at", weekStart.toISOString())
+      .lte("created_at", weekEnd.toISOString());
+
+    if (referralOrdersError) throw referralOrdersError;
+
+    const reminder = buildWeeklyReminder((latestReport?.report_json as Record<string, unknown>) ?? {}, {
+      orderCount: orders?.length ?? 0,
+      personalCashSpent: (orders ?? []).reduce((sum, order) => sum + Number(order.cash_paid ?? 0), 0),
+      referredOrderCount: referralOrders?.length ?? 0
+    });
 
     const { error } = await supabase.from("weekly_reminders").upsert(
       {

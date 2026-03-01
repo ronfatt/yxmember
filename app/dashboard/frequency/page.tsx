@@ -1,6 +1,7 @@
 import DashboardShell from "../../../components/DashboardShell";
 import FrequencyGenerator from "../../../components/FrequencyGenerator";
 import ReminderGenerator from "../../../components/ReminderGenerator";
+import Link from "next/link";
 import { requireUser } from "../../../lib/actions/session";
 import type { FrequencyReport, WeeklyReminder } from "../../../lib/metaenergy/frequency";
 import { createClient } from "../../../lib/supabase/server";
@@ -39,7 +40,17 @@ export default async function FrequencyDashboardPage() {
               <p className="text-sm text-black/55">Latest report</p>
               <h2 className="font-display text-3xl text-[#123524]">Frequency profile</h2>
             </div>
-            <FrequencyGenerator birthday={profile?.birthday ?? null} />
+            <div className="flex flex-wrap gap-2">
+              {frequency ? (
+                <Link
+                  href="/dashboard/frequency/print"
+                  className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-semibold text-[#123524]"
+                >
+                  Print view
+                </Link>
+              ) : null}
+              <FrequencyGenerator birthday={profile?.birthday ?? null} />
+            </div>
           </div>
           <p className="text-sm text-black/70">{frequency?.summary ?? "Generate a report to populate this card."}</p>
           {frequency ? (

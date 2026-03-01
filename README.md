@@ -26,6 +26,7 @@ Run the Supabase SQL migrations in order:
 
 1. [`supabase/migrations/0001_init.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0001_init.sql)
 2. [`supabase/migrations/0002_metaenergy_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0002_metaenergy_mvp.sql)
+3. [`supabase/migrations/0003_mentor_booking_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0003_mentor_booking_mvp.sql)
 
 `0002_metaenergy_mvp.sql` adds:
 
@@ -69,6 +70,16 @@ Open [http://localhost:3000](http://localhost:3000).
 - `POST /api/cron/keepalive`
   - Protected by `CRON_SECRET` in `Authorization: Bearer ...` or `x-cron-secret`
   - Checks the previous month, updates `monthly_stats`, increments strikes, and resets tier progress after 2 consecutive sub-RM50 months
+- `POST /api/appointments/quote`
+  - Authenticated member quote route for mentor session pricing and points cap
+- `POST /api/appointments/create`
+  - Authenticated member route to create a pending mentor appointment
+- `POST /api/admin/appointments/confirm`
+  - Admin route to confirm an appointment slot
+- `POST /api/admin/appointments/mark-paid`
+  - Admin route to settle an appointment and create a paid `service` order
+- `POST /api/admin/appointments/cancel`
+  - Admin route to cancel an appointment
 
 ## Business rules implemented
 
@@ -88,10 +99,47 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Dashboard routes
 
 - `/dashboard`
+- `/dashboard/appointments`
 - `/dashboard/referrals`
 - `/dashboard/points`
 - `/dashboard/frequency`
+- `/book/[mentorId]/[serviceId]`
+- `/book/intake`
+- `/book/confirm`
+- `/admin/appointments`
+- `/admin/mentors`
 - `/admin/orders`
+
+## Mentor booking MVP
+
+This repository now includes a first-pass mentor booking flow for authenticated members:
+
+- `/mentors`
+  - public mentor list with active services
+- `/mentors/[id]`
+  - mentor profile and service selection
+- `/book/[mentorId]/[serviceId]`
+  - choose a slot generated from weekly rules and date exceptions
+- `/book/intake`
+  - collect the session intention before confirmation
+- `/book/confirm`
+  - apply points up to the 50% cap and submit the appointment
+- `/dashboard/appointments`
+  - member view for pending and confirmed sessions
+- `/admin/appointments`
+  - confirm, cancel, and mark appointments as paid
+
+Admin setup currently happens from `/admin/mentors`:
+
+- create mentor profiles
+- add 30/60/90 minute services
+- add weekly availability rules
+
+When an admin marks an appointment as paid, the app creates a normal `service` order through the existing MetaEnergy order pipeline, so:
+
+- points earning and redemption still apply
+- personal monthly spend still updates
+- referral attribution and commission still apply for downlines
 
 ## Vercel deployment
 

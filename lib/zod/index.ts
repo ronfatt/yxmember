@@ -31,6 +31,35 @@ export const mentorBookingSchema = z.object({
   deposit_amount_cents: z.number().int().min(0).default(0)
 });
 
+export const appointmentQuoteSchema = z.object({
+  service_id: z.string().uuid(),
+  points_requested: z.number().int().min(0).default(0)
+});
+
+export const appointmentCreateSchema = z.object({
+  mentor_id: z.string().uuid(),
+  service_id: z.string().uuid(),
+  start_at: z.string().datetime(),
+  end_at: z.string().datetime(),
+  session_mode: z.enum(["online", "offline"]),
+  points_requested: z.number().int().min(0).default(0),
+  intake: z.object({
+    intention: z.string().min(8).max(300),
+    themes: z.array(z.string()).default([]),
+    share_birthday: z.boolean().default(false),
+    allow_recording: z.boolean().default(false),
+    desired_outcome: z.string().min(4).max(160)
+  })
+});
+
+export const appointmentAdminActionSchema = z.object({
+  appointment_id: z.string().uuid()
+});
+
+export const appointmentCancelSchema = appointmentAdminActionSchema.extend({
+  reason: z.string().min(2).max(240).optional()
+});
+
 export const enrollmentSchema = z.object({
   course_session_id: z.string().uuid()
 });

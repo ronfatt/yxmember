@@ -25,6 +25,7 @@ export default async function DashboardShell({
     { href: "/dashboard", label: t(language, { zh: "总览", en: "Overview" }) },
     { href: "/dashboard/referrals", label: t(language, { zh: "引荐", en: "Referrals" }) },
     { href: "/dashboard/points", label: t(language, { zh: "积分", en: "Points" }) },
+    { href: "/dashboard/appointments", label: t(language, { zh: "预约", en: "Appointments" }) },
     { href: "/dashboard/history", label: t(language, { zh: "历史", en: "History" }) },
     { href: "/dashboard/frequency", label: t(language, { zh: "频率", en: "Frequency" }) }
   ];

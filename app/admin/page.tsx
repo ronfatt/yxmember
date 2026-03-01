@@ -8,6 +8,24 @@ export default async function AdminIndex() {
   const language = getCurrentLanguage();
   const items = [
     {
+      href: "/admin/appointments",
+      eyebrow: t(language, { zh: "导师会谈", en: "Guidance sessions" }),
+      title: t(language, { zh: "预约后台", en: "Appointments desk" }),
+      description: t(language, {
+        zh: "管理导师会谈预约，确认时段、记账付款，并处理取消。",
+        en: "Manage mentor appointments, confirm slots, settle payment, and handle cancellations."
+      })
+    },
+    {
+      href: "/admin/mentors",
+      eyebrow: t(language, { zh: "导师与时段", en: "Mentors and schedules" }),
+      title: t(language, { zh: "导师设置", en: "Mentor setup" }),
+      description: t(language, {
+        zh: "维护导师资料、服务时长和每周开放时段。",
+        en: "Maintain mentor profiles, services, and weekly availability."
+      })
+    },
+    {
       href: "/admin/orders",
       eyebrow: t(language, { zh: "订单与冲正", en: "Orders and reversals" }),
       title: t(language, { zh: "订单后台", en: "Order desk" }),
@@ -53,7 +71,7 @@ export default async function AdminIndex() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-5">
         {items.map((item) => (
           <Link
             key={item.href}

@@ -21,6 +21,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <LanguageSwitcher currentLanguage={language} />
             <nav className="flex gap-4 text-sm">
               <Link href="/admin/orders">{t(language, { zh: "订单", en: "Orders" })}</Link>
+              <Link href="/admin/appointments">{t(language, { zh: "预约", en: "Appointments" })}</Link>
+              <Link href="/admin/mentors">{t(language, { zh: "导师", en: "Mentors" })}</Link>
               <Link href="/admin/relationships">{t(language, { zh: "关系", en: "Relationships" })}</Link>
               <Link href="/dashboard">{t(language, { zh: "会员中心", en: "Dashboard" })}</Link>
             </nav>

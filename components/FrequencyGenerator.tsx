@@ -3,8 +3,15 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import type { Language } from "../lib/i18n/shared";
 
-export default function FrequencyGenerator({ birthday }: { birthday: string | null }) {
+export default function FrequencyGenerator({
+  birthday,
+  language
+}: {
+  birthday: string | null;
+  language: Language;
+}) {
   const router = useRouter();
   const [value, setValue] = useState(birthday ?? "");
   const [isPending, startTransition] = useTransition();
@@ -18,11 +25,11 @@ export default function FrequencyGenerator({ birthday }: { birthday: string | nu
 
     const data = await response.json();
     if (!response.ok) {
-      toast.error(data.error ?? "Unable to generate report.");
+      toast.error(data.error ?? (language === "en" ? "Unable to generate report." : "无法生成报告。"));
       return;
     }
 
-    toast.success("Frequency report updated.");
+    toast.success(language === "en" ? "Frequency report updated." : "频率报告已更新。");
     startTransition(() => router.refresh());
   };
 
@@ -40,7 +47,7 @@ export default function FrequencyGenerator({ birthday }: { birthday: string | nu
         onClick={handleGenerate}
         className="rounded-full bg-[#123524] px-5 py-2 text-sm font-semibold text-white"
       >
-        {isPending ? "Generating..." : "Generate / Update"}
+        {isPending ? (language === "en" ? "Generating..." : "生成中...") : language === "en" ? "Generate / Update" : "生成 / 更新"}
       </button>
     </div>
   );

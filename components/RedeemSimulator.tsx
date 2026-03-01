@@ -3,8 +3,15 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { formatMoney } from "../lib/metaenergy/helpers";
+import type { Language } from "../lib/i18n/shared";
 
-export default function RedeemSimulator({ pointsBalance }: { pointsBalance: number }) {
+export default function RedeemSimulator({
+  pointsBalance,
+  language
+}: {
+  pointsBalance: number;
+  language: Language;
+}) {
   const [amountTotal, setAmountTotal] = useState("100");
   const [pointsRedeemed, setPointsRedeemed] = useState("");
   const [result, setResult] = useState<null | {
@@ -25,7 +32,7 @@ export default function RedeemSimulator({ pointsBalance }: { pointsBalance: numb
 
     const data = await response.json();
     if (!response.ok) {
-      toast.error(data.error ?? "Unable to calculate.");
+      toast.error(data.error ?? (language === "en" ? "Unable to calculate." : "无法计算。"));
       return;
     }
 
@@ -42,7 +49,7 @@ export default function RedeemSimulator({ pointsBalance }: { pointsBalance: numb
           step="0.01"
           value={amountTotal}
           onChange={(event) => setAmountTotal(event.target.value)}
-          placeholder="Order price"
+          placeholder={language === "en" ? "Order price" : "订单金额"}
         />
         <input
           className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3"
@@ -50,7 +57,7 @@ export default function RedeemSimulator({ pointsBalance }: { pointsBalance: numb
           min="0"
           value={pointsRedeemed}
           onChange={(event) => setPointsRedeemed(event.target.value)}
-          placeholder={`Points to use (balance ${pointsBalance})`}
+          placeholder={language === "en" ? `Points to use (balance ${pointsBalance})` : `要使用的积分（当前余额 ${pointsBalance}）`}
         />
       </div>
       <button
@@ -58,12 +65,13 @@ export default function RedeemSimulator({ pointsBalance }: { pointsBalance: numb
         onClick={handleRun}
         className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-semibold text-[#123524]"
       >
-        Simulate redemption
+        {language === "en" ? "Simulate redemption" : "模拟抵扣"}
       </button>
       {result ? (
         <div className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-black/70">
-          Max redeemable: {result.maxRedeemablePoints} points. Applied: {result.appliedPoints} points. Cash required:{" "}
-          {formatMoney(result.cashRequired)}.
+          {language === "en"
+            ? `Max redeemable: ${result.maxRedeemablePoints} points. Applied: ${result.appliedPoints} points. Cash required: ${formatMoney(result.cashRequired)}.`
+            : `本单最多可抵扣 ${result.maxRedeemablePoints} 积分。实际使用 ${result.appliedPoints} 积分。仍需现金支付 ${formatMoney(result.cashRequired)}。`}
         </div>
       ) : null}
     </div>

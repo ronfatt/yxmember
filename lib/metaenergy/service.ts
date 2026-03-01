@@ -47,12 +47,28 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
 
   const { data: buyerProfile, error: buyerError } = await admin
     .from("users_profile")
-    .select("id, points_balance")
+    .select("id, points_balance, referred_by")
     .eq("id", input.userId)
     .single();
 
   if (buyerError || !buyerProfile) {
     throw buyerError ?? new Error("Buyer profile not found.");
+  }
+
+  const effectiveReferrerId = buyerProfile.referred_by ?? null;
+  const requestedReferrerId = input.referrerId ?? null;
+  const requestedReferredUserId = input.referredUserId ?? null;
+
+  if (requestedReferredUserId && requestedReferredUserId !== input.userId) {
+    throw new Error("Referred user must match the buyer.");
+  }
+
+  if (effectiveReferrerId) {
+    if (requestedReferrerId && requestedReferrerId !== effectiveReferrerId) {
+      throw new Error("Referrer does not match this member's upstream relationship.");
+    }
+  } else if (requestedReferrerId || requestedReferredUserId) {
+    throw new Error("This member has no upstream referrer, so the order cannot be recorded as referred.");
   }
 
   const safePoints = calcMaxRedeemablePoints(amountTotal, buyerProfile.points_balance);
@@ -117,11 +133,11 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
 
   await updateMonthlyStats(admin, input.userId, order.created_at);
 
-  if (input.referrerId && input.referredUserId) {
+  if (effectiveReferrerId) {
     const { data: referrerProfile, error: referrerError } = await admin
       .from("users_profile")
       .select("id, tier_rate, total_referred_sales, total_commission_earned")
-      .eq("id", input.referrerId)
+      .eq("id", effectiveReferrerId)
       .single();
 
     if (referrerError || !referrerProfile) {
@@ -137,8 +153,8 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
 
     const { error: referralOrderError } = await admin.from("referral_orders").insert({
       order_id: order.id,
-      referrer_id: input.referrerId,
-      referred_user_id: input.referredUserId,
+      referrer_id: effectiveReferrerId,
+      referred_user_id: input.userId,
       commission_rate: currentRate,
       commission_amount: commissionAmount
     });

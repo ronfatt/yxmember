@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <h1 className="font-display text-2xl text-[#123524]">MetaEnergy Admin</h1>
           <nav className="flex gap-4 text-sm">
             <Link href="/admin/orders">Orders</Link>
+            <Link href="/admin/relationships">Relationships</Link>
             <Link href="/dashboard">Dashboard</Link>
           </nav>
         </div>

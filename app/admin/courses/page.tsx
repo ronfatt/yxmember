@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
@@ -45,13 +46,61 @@ async function toggleCoursePublish(formData: FormData) {
   const is_published = formData.get("is_published") === "true";
   await admin.from("courses").update({ is_published }).eq("id", id);
   revalidatePath("/admin/courses");
+  revalidatePath("/courses");
+}
+
+async function updateSessionStatus(formData: FormData) {
+  "use server";
+  const admin = supabaseAdmin();
+  const id = String(formData.get("id"));
+  const status = String(formData.get("status"));
+  await admin.from("course_sessions").update({ status }).eq("id", id);
+  revalidatePath("/admin/courses");
+  revalidatePath("/courses");
+}
+
+async function approveCourseTransfer(formData: FormData) {
+  "use server";
+  const adminUser = await requireAdmin();
+  const admin = supabaseAdmin();
+  const orderId = String(formData.get("order_id"));
+
+  await admin.rpc("process_paid_order", {
+    order_id_input: orderId,
+    payment_intent_input: "BANK_TRANSFER_REVIEWED"
+  });
+
+  await admin
+    .from("orders")
+    .update({
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: adminUser.id
+    })
+    .eq("id", orderId);
+
+  revalidatePath("/admin/courses");
+  revalidatePath("/dashboard/programs");
+  revalidatePath("/dashboard/history");
 }
 
 export default async function AdminCoursesPage() {
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
-  const { data: courses } = await admin.from("courses").select("*").order("created_at", { ascending: false });
-  const { data: sessions } = await admin.from("course_sessions").select("*").order("start_at", { ascending: true });
+  const [{ data: courses }, { data: sessions }, { data: pendingOrders }, { data: profiles }] = await Promise.all([
+    admin.from("courses").select("*").order("created_at", { ascending: false }),
+    admin.from("course_sessions").select("*").order("start_at", { ascending: true }),
+    admin
+      .from("orders")
+      .select("id,user_id,amount_total,currency,slip_url,created_at,course_session_id,payment_status")
+      .eq("order_type", "COURSE")
+      .eq("payment_status", "PENDING")
+      .order("created_at", { ascending: false }),
+    admin.from("users_profile").select("id,name,referral_code")
+  ]);
+
+  const courseMap = new Map((courses ?? []).map((course) => [course.id, course]));
+  const sessionMap = new Map((sessions ?? []).map((session) => [session.id, session]));
+  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
 
   return (
     <div className="space-y-6">
@@ -115,12 +164,67 @@ export default async function AdminCoursesPage() {
         <h2 className="font-display text-2xl">{t(language, { zh: "场次列表", en: "Sessions" })}</h2>
         {sessions?.length ? (
           sessions.map((session) => (
-            <div key={session.id} className="border-b pb-2 text-sm text-black/70">
-              {session.start_at} - {session.end_at} ({session.status})
-            </div>
+            <form key={session.id} action={updateSessionStatus} className="flex flex-wrap items-center justify-between gap-3 border-b pb-2 text-sm text-black/70">
+              <div>
+                <p className="font-medium text-[#123524]">{courseMap.get(session.course_id)?.title ?? session.course_id}</p>
+                <p>{session.start_at} - {session.end_at}</p>
+                <p className="text-xs text-black/50">{session.venue_name || "-"} · {(Number(session.price_cents ?? 0) / 100).toFixed(2)} {session.currency}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="hidden" name="id" value={session.id} />
+                <select name="status" defaultValue={session.status} className="rounded border p-2 text-sm">
+                  <option value="DRAFT">{t(language, { zh: "草稿", en: "Draft" })}</option>
+                  <option value="PUBLISHED">{t(language, { zh: "开放报名", en: "Published" })}</option>
+                  <option value="CANCELLED">{t(language, { zh: "已取消", en: "Cancelled" })}</option>
+                </select>
+                <button className="rounded-full bg-ink px-3 py-1 text-xs text-white">{t(language, { zh: "更新", en: "Update" })}</button>
+              </div>
+            </form>
           ))
         ) : (
           <p className="text-sm text-black/60">{t(language, { zh: "还没有场次。", en: "No sessions yet." })}</p>
+        )}
+      </section>
+
+      <section className="card space-y-3">
+        <div className="space-y-1">
+          <h2 className="font-display text-2xl">{t(language, { zh: "汇款审核", en: "Transfer review" })}</h2>
+          <p className="text-sm text-black/60">{t(language, { zh: "会员报名收费课程后，会在这里出现待审核订单。确认收到汇款后，系统会自动锁定席位。", en: "Paid program reservations appear here for review. Once transfer is confirmed, the system will lock the seat automatically." })}</p>
+        </div>
+        {pendingOrders?.length ? (
+          pendingOrders.map((order) => {
+            const session = order.course_session_id ? sessionMap.get(order.course_session_id) : null;
+            const course = session ? courseMap.get(session.course_id) : null;
+            const member = profileMap.get(order.user_id);
+
+            return (
+              <div key={order.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm">
+                <div className="space-y-1">
+                  <p className="font-medium text-[#123524]">{course?.title ?? t(language, { zh: "课程报名", en: "Program order" })}</p>
+                  <p className="text-black/60">
+                    {(member?.name || member?.referral_code || order.user_id)} · {Number(order.amount_total ?? 0).toFixed(2)} {order.currency}
+                  </p>
+                  {session ? <p className="text-black/50">{session.start_at} · {session.venue_name || "-"}</p> : null}
+                  <p className="text-black/50">{new Date(order.created_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}</p>
+                  {order.slip_url ? (
+                    <a href={order.slip_url} target="_blank" rel="noreferrer" className="text-jade underline underline-offset-4">
+                      {t(language, { zh: "查看单据", en: "View slip" })}
+                    </a>
+                  ) : (
+                    <p className="text-[#8c3a1f]">{t(language, { zh: "会员尚未上传单据。", en: "Member has not uploaded a slip yet." })}</p>
+                  )}
+                </div>
+                <form action={approveCourseTransfer}>
+                  <input type="hidden" name="order_id" value={order.id} />
+                  <button className="rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524]">
+                    {t(language, { zh: "确认已汇款", en: "Mark paid" })}
+                  </button>
+                </form>
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-sm text-black/60">{t(language, { zh: "目前没有待审核的课程汇款订单。", en: "There are no pending program transfer orders." })}</p>
         )}
       </section>
     </div>

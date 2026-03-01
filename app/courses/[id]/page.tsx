@@ -44,7 +44,8 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
           </div>
         </div>
         <div className="card space-y-4">
-          <h2 className="font-display text-2xl">{t(language, { zh: "即将开始的场次", en: "Upcoming Sessions" })}</h2>
+          <h2 className="font-display text-2xl">{t(language, { zh: "开放报名场次", en: "Open sessions" })}</h2>
+          <p className="text-sm text-black/60">{t(language, { zh: "免费场次可直接确认；收费场次会先建立报名订单，并在你上传银行转账单据后审核。", en: "Free sessions confirm instantly. Paid sessions create a reservation order first, then move to review after you upload your transfer slip." })}</p>
           {sessions?.length ? <CourseSessions sessions={sessions} language={language} /> : <p className="text-black/60">{t(language, { zh: "还没有已发布场次。", en: "No published sessions yet." })}</p>}
         </div>
       </main>

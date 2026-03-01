@@ -131,6 +131,26 @@ export default async function DashboardPage() {
         />
         <div className="card flex flex-col justify-between gap-4">
           <div className="space-y-2">
+            <p className="text-sm text-black/55">{t(language, { zh: "课程与活动", en: "Programs" })}</p>
+            <p className="font-display text-3xl text-[#123524]">{t(language, { zh: "查看开放报名", en: "Open reservations" })}</p>
+            <p className="text-sm text-black/65">
+              {t(language, {
+                zh: "浏览课程与活动，免费场次可直接确认，收费场次可先报名并上传银行转账单据。",
+                en: "Browse programs and events. Free sessions confirm instantly, while paid sessions can be reserved and completed by bank transfer."
+              })}
+            </p>
+          </div>
+          <div>
+            <Link
+              href="/dashboard/programs"
+              className="inline-flex rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524] shadow-[0_16px_28px_rgba(200,165,92,0.2)]"
+            >
+              {t(language, { zh: "进入课程活动", en: "View programs" })}
+            </Link>
+          </div>
+        </div>
+        <div className="card flex flex-col justify-between gap-4">
+          <div className="space-y-2">
             <p className="text-sm text-black/55">{t(language, { zh: "导师会谈", en: "Guidance sessions" })}</p>
             <p className="font-display text-3xl text-[#123524]">{t(language, { zh: "预约导师", en: "Book a mentor" })}</p>
             <p className="text-sm text-black/65">

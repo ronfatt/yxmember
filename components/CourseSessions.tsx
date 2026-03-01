@@ -15,14 +15,21 @@ export default function CourseSessions({ sessions, language }: { sessions: any[]
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ course_session_id: sessionId })
       });
-      if (!res.ok) throw new Error("Failed to start checkout");
-      const { order_id } = await res.json();
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error ?? "Failed to start checkout");
+      const { order_id, requires_slip, payment_status } = payload;
       if (order_id) {
-        toast.success(language === "en" ? "Order created. Upload bank-in slip in dashboard." : "订单已创建，请到会员中心上传汇款凭证。");
-        window.location.href = "/dashboard";
+        if (payment_status === "PAID") {
+          toast.success(language === "en" ? "Your seat is confirmed." : "报名成功，席位已确认。");
+        } else if (requires_slip) {
+          toast.success(language === "en" ? "Reservation created. Upload your transfer slip in Programs." : "报名订单已创建，请到课程活动页上传汇款单据。");
+        } else {
+          toast.success(language === "en" ? "Reservation created." : "报名订单已创建。");
+        }
+        window.location.href = "/dashboard/programs";
       }
     } catch (error) {
-      toast.error(language === "en" ? "Unable to start checkout." : "无法开始结账。");
+      toast.error(error instanceof Error ? error.message : language === "en" ? "Unable to start checkout." : "无法开始报名。");
     } finally {
       setLoading(null);
     }
@@ -43,9 +50,13 @@ export default function CourseSessions({ sessions, language }: { sessions: any[]
           >
             {loading === session.id
               ? language === "en" ? "Processing..." : "处理中..."
-              : language === "en"
-                ? `Reserve ${(session.price_cents / 100).toFixed(2)} ${session.currency}`
-                : `预约 ${(session.price_cents / 100).toFixed(2)} ${session.currency}`}
+              : Number(session.price_cents ?? 0) <= 0
+                ? language === "en"
+                  ? "Reserve free seat"
+                  : "免费报名"
+                : language === "en"
+                  ? `Reserve ${(session.price_cents / 100).toFixed(2)} ${session.currency}`
+                  : `报名 ${(session.price_cents / 100).toFixed(2)} ${session.currency}`}
           </button>
         </div>
       ))}

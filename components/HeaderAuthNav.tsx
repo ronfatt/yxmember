@@ -29,11 +29,12 @@ export default function HeaderAuthNav({ language }: { language: Language }) {
   const links = user
     ? [
         { href: "/dashboard", label: t(language, { zh: "会员中心", en: "Dashboard" }) },
+        { href: "/courses", label: t(language, { zh: "课程活动", en: "Programs" }) },
         { href: "/mentors", label: t(language, { zh: "导师", en: "Mentors" }) },
         { href: "/dashboard/referrals", label: t(language, { zh: "引荐进度", en: "Referrals" }) },
         { href: "/dashboard/points", label: t(language, { zh: "积分", en: "Points" }) }
       ]
-    : [];
+    : [{ href: "/courses", label: t(language, { zh: "课程活动", en: "Programs" }) }];
 
   return (
     <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-black/62">

@@ -23,6 +23,7 @@ export default async function DashboardShell({
   const isAdmin = await getAdminStatus(user?.id, user?.email);
   const links = [
     { href: "/dashboard", label: t(language, { zh: "总览", en: "Overview" }) },
+    { href: "/dashboard/programs", label: t(language, { zh: "课程活动", en: "Programs" }) },
     { href: "/dashboard/referrals", label: t(language, { zh: "引荐", en: "Referrals" }) },
     { href: "/dashboard/points", label: t(language, { zh: "积分", en: "Points" }) },
     { href: "/mentors", label: t(language, { zh: "导师", en: "Mentors" }) },

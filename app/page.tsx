@@ -7,52 +7,6 @@ import { currentMonthAnnouncements } from "../lib/metaenergy/announcements";
 import { t } from "../lib/i18n/shared";
 import { getCurrentLanguage } from "../lib/i18n/server";
 
-const valueCards = [
-  {
-    icon: "RM",
-    title: "分享之中，回馈自然发生",
-    description: "引荐关系稳定累积后，可逐步解锁最高 25% 的会员回馈。"
-  },
-  {
-    icon: "FX",
-    title: "体验之中，看见成长",
-    description: "个人频率报告、每周提醒与日常引导，帮助你持续校准自己的节奏。"
-  },
-  {
-    icon: "PT",
-    title: "参与之中，累积礼遇",
-    description: "每次消费都能逐步累积积分，并在合适的时候兑换下一次体验。"
-  }
-];
-
-const faqItems = [
-  {
-    question: "引荐回馈是如何解锁的？",
-    answer:
-      "引荐回馈会在累计引荐业绩达到 RM1,000、RM3,000 与 RM10,000 时依序解锁。若发生重置，则会从重置后的累计业绩重新开始计算。"
-  },
-  {
-    question: "刚跨过门槛的那一单，会立即用新的回馈比例吗？",
-    answer:
-      "不会。元象采用严格的不追溯规则。跨过门槛的当笔订单仍沿用原本层级，下一笔被归因的订单才会开始使用新的比例。"
-  },
-  {
-    question: "每月维持资格的规则是什么？",
-    answer:
-      "会员每月需要至少 RM50 的个人现金消费。若连续两个月低于 RM50，引荐层级与累计引荐业绩会归零，需重新累积。"
-  },
-  {
-    question: "积分是如何累积与使用的？",
-    answer:
-      "每实际支付满 RM100 可获得 10 点积分。积分最多可抵扣订单金额的 50%，其余至少 50% 需以现金支付，积分不能兑换现金。"
-  },
-  {
-    question: "这套会员系统适合谁？",
-    answer:
-      "它适合想用更清晰、更安定的方式体验频率工具、持续参与提醒内容，并在分享元象的过程中看见自己成长与回馈的人。"
-  }
-];
-
 export default function HomePage() {
   const language = getCurrentLanguage();
   const valueCards = [
@@ -118,11 +72,6 @@ export default function HomePage() {
       })
     }
   ];
-  const previewLabel = t(language, { zh: "Preview UI", en: "Preview UI" });
-  const previewNotice = t(language, {
-    zh: "仅供预览。真实数据会在登录后显示。",
-    en: "Preview only. Actual data appears after login."
-  });
   const softPreviewLabel = t(language, { zh: "会员空间 · 预览界面", en: "Member Space · Preview UI" });
   const softPreviewNotice = t(language, {
     zh: "仅展示结构与层级逻辑，真实数据将在登录后呈现。",
@@ -185,7 +134,6 @@ export default function HomePage() {
                     <p className="mt-4 font-display text-2xl leading-tight">{t(language, { zh: "体验频率工具", en: "Experience frequency tools" })}</p>
                     <p className="mt-3 text-sm leading-7 text-white/65">
                       {t(language, { zh: "报告、提醒与日常引导。", en: "Reports, reminders, and grounded guidance." })}
-                      <span className="mt-2 block font-accent text-base text-white/42">Reports, reminders, and grounded guidance.</span>
                     </p>
                   </Link>
                   <Link
@@ -196,7 +144,6 @@ export default function HomePage() {
                     <p className="mt-4 font-display text-2xl leading-tight">{t(language, { zh: "累积引荐回馈", en: "Earn referral rewards" })}</p>
                     <p className="mt-3 text-sm leading-7 text-white/65">
                       {t(language, { zh: "清楚看见层级与业绩变化。", en: "Track tiers, sales progress, and reward momentum." })}
-                      <span className="mt-2 block font-accent text-base text-white/42">Track tiers, sales progress, and reward momentum.</span>
                     </p>
                   </Link>
                 </div>
@@ -341,18 +288,18 @@ export default function HomePage() {
               <h2 className="mt-5 font-display text-4xl leading-tight text-[#0f2f25] md:text-5xl">{t(language, { zh: "活动、上新与本月会员礼遇", en: "Campaigns, launches, and member moments" })}</h2>
             </div>
             <Link href="/register" className="rounded-full bg-[#123524] px-6 py-3 text-sm font-semibold text-white">
-              本月加入会员
+              {t(language, { zh: "本月加入会员", en: "Join this month" })}
             </Link>
           </div>
           <div className="grid gap-10 lg:grid-cols-3">
             {currentMonthAnnouncements.map((item) => (
               <div key={item.id} className="rounded-[34px] border border-black/5 bg-white p-8 shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#b38924]">{item.monthLabel}</p>
-                  <span className="rounded-full bg-[#f7eed1] px-3 py-1 text-xs font-semibold text-[#8a6a19]">{item.badge}</span>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#b38924]">{item.monthLabel[language]}</p>
+                  <span className="rounded-full bg-[#f7eed1] px-3 py-1 text-xs font-semibold text-[#8a6a19]">{item.badge[language]}</span>
                 </div>
-                <h3 className="mt-4 font-display text-3xl text-[#123524]">{item.title}</h3>
-                <p className="mt-3 text-base leading-7 text-black/68">{item.description}</p>
+                <h3 className="mt-4 font-display text-3xl text-[#123524]">{item.title[language]}</h3>
+                <p className="mt-3 text-base leading-7 text-black/68">{item.description[language]}</p>
               </div>
             ))}
           </div>

@@ -117,12 +117,12 @@ export default function RegisterForm({ language }: { language: Language }) {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium text-[#0f2f24]/80">Email</span>
+          <span className="text-xs font-medium text-[#0f2f24]/80">{language === "en" ? "Email" : "电子邮箱"}</span>
           <div className="mt-2 rounded-[20px] border border-[rgba(201,162,39,0.25)] bg-[#fbf8f1] transition focus-within:border-[rgba(201,162,39,0.55)] focus-within:ring-4 focus-within:ring-[rgba(201,162,39,0.18)]">
             <input
               className="w-full bg-transparent px-4 py-3.5 text-[#0f2f24] outline-none"
               type="email"
-              placeholder="you@email.com"
+              placeholder={language === "en" ? "you@email.com" : "请输入你的邮箱"}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />

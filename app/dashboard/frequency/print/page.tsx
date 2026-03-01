@@ -2,7 +2,12 @@ import PrintReportButton from "../../../../components/PrintReportButton";
 import { requireUser } from "../../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../../lib/i18n/server";
 import { t } from "../../../../lib/i18n/shared";
-import type { FrequencyReport, WeeklyReminder } from "../../../../lib/metaenergy/frequency";
+import {
+  localizeFrequencyReport,
+  localizeWeeklyReminder,
+  type FrequencyReport,
+  type WeeklyReminder
+} from "../../../../lib/metaenergy/frequency";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +44,9 @@ export default async function FrequencyPrintPage() {
       .maybeSingle()
   ]);
 
-  const frequency = report?.report_json as FrequencyReport | undefined;
-  const weeklyReminder = parseReminder(reminder?.content ?? null);
+  const rawFrequency = report?.report_json as FrequencyReport | undefined;
+  const frequency = localizeFrequencyReport(rawFrequency, language);
+  const weeklyReminder = localizeWeeklyReminder(parseReminder(reminder?.content ?? null), language, rawFrequency);
 
   return (
     <div className="min-h-screen bg-[#f8f6f2] print:bg-white">

@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { requireUser } from "../../../../lib/actions/session";
 import { buildWeeklyReminder } from "../../../../lib/metaenergy/frequency";
+import { getCurrentLanguage } from "../../../../lib/i18n/server";
 import { createClient } from "../../../../lib/supabase/server";
 
 export async function POST() {
   try {
     const user = await requireUser();
+    const language = getCurrentLanguage();
     const supabase = createClient();
 
     const { data: latestReport, error: reportError } = await supabase
@@ -47,7 +49,7 @@ export async function POST() {
       orderCount: orders?.length ?? 0,
       personalCashSpent: (orders ?? []).reduce((sum, order) => sum + Number(order.cash_paid ?? 0), 0),
       referredOrderCount: referralOrders?.length ?? 0
-    });
+    }, language);
 
     const { error } = await supabase.from("weekly_reminders").upsert(
       {
@@ -62,7 +64,8 @@ export async function POST() {
 
     return NextResponse.json({ ok: true, reminder });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to generate reminder.";
+    const language = getCurrentLanguage();
+    const message = error instanceof Error ? error.message : language === "en" ? "Unable to generate reminder." : "暂时无法生成提醒。";
     return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 }

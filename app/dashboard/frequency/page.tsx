@@ -5,7 +5,12 @@ import Link from "next/link";
 import { requireUser } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
-import type { FrequencyReport, WeeklyReminder } from "../../../lib/metaenergy/frequency";
+import {
+  localizeFrequencyReport,
+  localizeWeeklyReminder,
+  type FrequencyReport,
+  type WeeklyReminder
+} from "../../../lib/metaenergy/frequency";
 import { createClient } from "../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +37,8 @@ export default async function FrequencyDashboardPage() {
       .limit(8)
   ]);
 
-  const frequency = report?.report_json as FrequencyReport | undefined;
+  const rawFrequency = report?.report_json as FrequencyReport | undefined;
+  const frequency = localizeFrequencyReport(rawFrequency, language);
 
   return (
     <DashboardShell title={t(language, { zh: "频率工具", en: "Frequency tools" })} subtitle={t(language, { zh: "生日报告与每周提醒", en: "Birthday-based report and weekly guidance" })}>
@@ -127,7 +133,7 @@ export default async function FrequencyDashboardPage() {
             reminders.map((entry) => {
               const parsed = (() => {
                 try {
-                  return JSON.parse(entry.content) as WeeklyReminder;
+                  return localizeWeeklyReminder(JSON.parse(entry.content) as WeeklyReminder, language, rawFrequency);
                 } catch {
                   return null;
                 }

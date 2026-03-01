@@ -4,7 +4,12 @@ import FrequencyGenerator from "../../components/FrequencyGenerator";
 import ReminderGenerator from "../../components/ReminderGenerator";
 import { requireUser } from "../../lib/actions/session";
 import { buildKeepAliveLabel, buildPointsHint, buildSpendSummary, buildTierHint } from "../../lib/metaenergy/dashboard";
-import type { FrequencyReport, WeeklyReminder } from "../../lib/metaenergy/frequency";
+import {
+  localizeFrequencyReport,
+  localizeWeeklyReminder,
+  type FrequencyReport,
+  type WeeklyReminder
+} from "../../lib/metaenergy/frequency";
 import { formatMoney, formatPercent } from "../../lib/metaenergy/helpers";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 import { t } from "../../lib/i18n/shared";
@@ -66,11 +71,12 @@ export default async function DashboardPage() {
         .maybeSingle()
     ]);
 
-  const frequency = latestReport?.report_json as FrequencyReport | undefined;
+  const rawFrequency = latestReport?.report_json as FrequencyReport | undefined;
+  const frequency = localizeFrequencyReport(rawFrequency, language);
   const weeklyReminder = latestReminder?.content
     ? (() => {
         try {
-          return JSON.parse(latestReminder.content) as WeeklyReminder;
+          return localizeWeeklyReminder(JSON.parse(latestReminder.content) as WeeklyReminder, language, rawFrequency);
         } catch {
           return null;
         }
@@ -91,7 +97,7 @@ export default async function DashboardPage() {
         <MetricCard
           title={t(language, { zh: "当前层级", en: "Current tier" })}
           value={formatPercent(Number(profile?.tier_rate ?? 0))}
-          caption={buildTierHint()}
+          caption={buildTierHint(language)}
         />
         <MetricCard
           title={t(language, { zh: "累计推荐业绩", en: "Total referred sales" })}
@@ -106,17 +112,17 @@ export default async function DashboardPage() {
         <MetricCard
           title={t(language, { zh: "本月个人消费", en: "Personal spend this month" })}
           value={formatMoney(Number(currentMonth?.personal_cash_total ?? 0))}
-          caption={buildSpendSummary(Number(currentMonth?.personal_cash_total ?? 0))}
+          caption={buildSpendSummary(Number(currentMonth?.personal_cash_total ?? 0), language)}
         />
         <MetricCard
           title={t(language, { zh: "活跃维持状态", en: "Keep-alive status" })}
           value={language === "en" ? `${Number(profile?.months_under_50 ?? 0)} strike` : `${Number(profile?.months_under_50 ?? 0)} 次提醒`}
-          caption={buildKeepAliveLabel(Number(profile?.months_under_50 ?? 0))}
+          caption={buildKeepAliveLabel(Number(profile?.months_under_50 ?? 0), language)}
         />
         <MetricCard
           title={t(language, { zh: "积分余额", en: "Points balance" })}
           value={`${Number(profile?.points_balance ?? 0)} ${language === "en" ? "pts" : "积分"}`}
-          caption={buildPointsHint()}
+          caption={buildPointsHint(language)}
         />
         <div className="card space-y-4 lg:col-span-2">
           <div className="flex items-start justify-between gap-4">

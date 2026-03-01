@@ -12,26 +12,26 @@ export default function HomePage() {
   const valueCards = [
     {
       icon: "RM",
-      title: t(language, { zh: "分享之中，回馈自然发生", en: "Earn While You Share" }),
+      title: t(language, { zh: "分享之上，回响自生", en: "Resonance follows trust" }),
       description: t(language, {
-        zh: "引荐关系稳定累积后，可逐步解锁最高 25% 的会员回馈。",
-        en: "Unlock up to 25% referral rewards as your community grows with you."
+        zh: "当信任被认真对待，回馈只是时间的问题。引荐不是推销，而是一种价值的传递。",
+        en: "When trust is treated with care, return becomes a matter of time. Referral is not selling. It is the passing on of value."
       })
     },
     {
       icon: "FX",
-      title: t(language, { zh: "体验之中，看见成长", en: "Experience & Grow" }),
+      title: t(language, { zh: "在体验中，稳步看见自己", en: "See yourself through experience" }),
       description: t(language, {
-        zh: "个人频率报告、每周提醒与日常引导，帮助你持续校准自己的节奏。",
-        en: "Personal frequency reports, weekly reminders, and guided tools for everyday alignment."
+        zh: "频率报告与节奏提醒，不是管理工具，而是一种对生活的校准。你不会被催促，只会被陪伴。",
+        en: "Frequency reports and rhythm reminders are not management tools. They are a gentler way to recalibrate life."
       })
     },
     {
       icon: "PT",
-      title: t(language, { zh: "参与之中，累积礼遇", en: "Get Rewarded" }),
+      title: t(language, { zh: "参与，是长期关系的开始", en: "Participation begins the relationship" }),
       description: t(language, {
-        zh: "每次消费都能逐步累积积分，并在合适的时候兑换下一次体验。",
-        en: "Earn points on every purchase and redeem up to 50% of your next order."
+        zh: "每一次消费、每一次到访，都在为下一次更好的体验铺路。积分只是记录，真正累积的是你与空间的关系。",
+        en: "Each purchase and each visit prepares the ground for a better next experience. Points are only the record."
       })
     }
   ];
@@ -39,36 +39,29 @@ export default function HomePage() {
     {
       question: t(language, { zh: "引荐回馈是如何解锁的？", en: "How do referral rewards unlock?" }),
       answer: t(language, {
-        zh: "引荐回馈会在累计引荐业绩达到 RM1,000、RM3,000 与 RM10,000 时依序解锁。若发生重置，则会从重置后的累计业绩重新开始计算。",
-        en: "Referral commission tiers unlock at RM1,000, RM3,000, and RM10,000 cumulative referred sales after any reset."
+        zh: "当你的引荐累计消费达到 RM1,000 后，回馈比例将被激活。在 RM3,000 与 RM10,000 时，比例将逐步提升。只要每月维持最低活跃标准，已解锁比例将长期保留。",
+        en: "Referral rewards activate after RM1,000 in cumulative referred sales, then rise again at RM3,000 and RM10,000."
       })
     },
     {
-      question: t(language, { zh: "刚跨过门槛的那一单，会立即用新的回馈比例吗？", en: "Does the threshold-crossing order earn the new rate?" }),
+      question: t(language, { zh: "若中断活跃会发生什么？", en: "What happens if activity drops?" }),
       answer: t(language, {
-        zh: "不会。元象采用严格的不追溯规则。跨过门槛的当笔订单仍沿用原本层级，下一笔被归因的订单才会开始使用新的比例。",
-        en: "No. The threshold-crossing order still uses the previous tier rate. The next referred order uses the upgraded rate."
+        zh: "若连续两个月未达到最低活跃标准，系统将重新计算你的引荐累计。我们更重视持续参与，而非一次性的爆发。",
+        en: "If activity falls below the minimum for two consecutive months, cumulative referral progress resets. Continuity matters more than one-time bursts."
       })
     },
     {
-      question: t(language, { zh: "每月维持资格的规则是什么？", en: "What is the keep-alive rule?" }),
+      question: t(language, { zh: "积分如何被合理使用？", en: "How are points used?" }),
       answer: t(language, {
-        zh: "会员每月需要至少 RM50 的个人现金消费。若连续两个月低于 RM50，引荐层级与累计引荐业绩会归零，需重新累积。",
-        en: "Members must keep at least RM50 in monthly personal cash purchases. Two consecutive months below RM50 reset referral progress."
+        zh: "积分可用于抵扣部分消费金额，单笔订单最高可抵扣 50%。这意味着，每一次使用，仍保留真实的参与。",
+        en: "Points can offset part of a purchase, up to 50% of each order, while preserving real paid participation."
       })
     },
     {
-      question: t(language, { zh: "积分是如何累积与使用的？", en: "How do points work?" }),
+      question: t(language, { zh: "这套结构适合什么样的人？", en: "Who is this structure for?" }),
       answer: t(language, {
-        zh: "每实际支付满 RM100 可获得 10 点积分。积分最多可抵扣订单金额的 50%，其余至少 50% 需以现金支付，积分不能兑换现金。",
-        en: "Members earn 10 points per full RM100 cash paid. Points can cover up to 50% of a purchase and cannot be exchanged for cash."
-      })
-    },
-    {
-      question: t(language, { zh: "这套会员系统适合谁？", en: "Who is this membership for?" }),
-      answer: t(language, {
-        zh: "它适合想用更清晰、更安定的方式体验频率工具、持续参与提醒内容，并在分享元象的过程中看见自己成长与回馈的人。",
-        en: "It is designed for people who want a clearer way to use frequency tools, stay engaged, and share MetaEnergy while seeing their rewards and progress."
+        zh: "适合愿意长期参与的人。适合相信稳定节奏的人。适合把“关系”看得比“收益”更重要的人。如果你只是寻找短期套利，这里并不适合你。",
+        en: "It suits people who value long-term participation, steady rhythm, and relationship over short-term gain."
       })
     }
   ];
@@ -100,8 +93,8 @@ export default function HomePage() {
                   </h1>
                   <p className="max-w-2xl text-lg leading-9 text-white/74 md:text-xl">
                     {t(language, {
-                      zh: "为长期设计的会员空间。为稳定回馈建立结构。",
-                      en: "A membership space designed for long-term presence and stable rewards."
+                      zh: "元象能量会员系统。为长期体验而设计的成长空间。不是积分工具，而是一种稳定关系的结构。",
+                      en: "A private member space designed for long-term experience, not just rewards."
                     })}
                     <span className="mt-3 block font-accent text-lg text-white/55 md:text-xl">
                       {t(language, {
@@ -116,36 +109,14 @@ export default function HomePage() {
                     href="/register"
                     className="champagne-gradient rounded-full px-7 py-3 text-sm font-semibold text-[#102116] shadow-[0_16px_40px_rgba(200,165,92,0.22)] transition hover:brightness-105"
                   >
-                    {t(language, { zh: "免费加入会员", en: "Start free membership" })}
+                    {t(language, { zh: "申请加入", en: "Apply to Join" })}
                   </Link>
                   <a
                     href="#how-it-works"
                     className="rounded-full border border-white/20 bg-white/5 px-7 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    {t(language, { zh: "了解运作方式", en: "How it works" })}
+                    {t(language, { zh: "了解结构", en: "Explore the Structure" })}
                   </a>
-                </div>
-                <div className="grid gap-5 pt-4 md:grid-cols-2">
-                  <Link
-                    href="/register"
-                    className="rounded-[32px] border border-white/10 bg-white/7 p-6 transition hover:bg-white/12"
-                  >
-                    <p className="font-accent text-sm tracking-[0.18em] text-[#ead1a0]">{t(language, { zh: "体验入口", en: "Experience" })}</p>
-                    <p className="mt-4 font-display text-2xl leading-tight">{t(language, { zh: "体验频率工具", en: "Experience frequency tools" })}</p>
-                    <p className="mt-3 text-sm leading-7 text-white/65">
-                      {t(language, { zh: "报告、提醒与日常引导。", en: "Reports, reminders, and grounded guidance." })}
-                    </p>
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="rounded-[32px] border border-white/10 bg-white/7 p-6 transition hover:bg-white/12"
-                  >
-                    <p className="font-accent text-sm tracking-[0.18em] text-[#ead1a0]">{t(language, { zh: "回馈入口", en: "Rewards" })}</p>
-                    <p className="mt-4 font-display text-2xl leading-tight">{t(language, { zh: "累积引荐回馈", en: "Earn referral rewards" })}</p>
-                    <p className="mt-3 text-sm leading-7 text-white/65">
-                      {t(language, { zh: "清楚看见层级与业绩变化。", en: "Track tiers, sales progress, and reward momentum." })}
-                    </p>
-                  </Link>
                 </div>
               </div>
 
@@ -207,8 +178,8 @@ export default function HomePage() {
 
         <section id="how-it-works" className="container py-28 md:py-[120px]">
           <div className="mb-8 max-w-2xl">
-            <p className="font-accent text-sm tracking-[0.18em] text-[#8d7240]">{t(language, { zh: "会员价值", en: "Member Value" })}</p>
-            <h2 className="mt-5 font-display text-4xl leading-tight text-[#0f2f25] md:text-5xl">{t(language, { zh: "真正值得慢慢留下来的三种感受", en: "Three reasons people stay close over time" })}</h2>
+            <p className="font-accent text-sm tracking-[0.18em] text-[#8d7240]">{t(language, { zh: "空间理念", en: "Why People Stay" })}</p>
+            <h2 className="mt-5 font-display text-4xl leading-tight text-[#0f2f25] md:text-5xl">{t(language, { zh: "为什么有人选择长期留在这里？", en: "Why do people choose to stay here over time?" })}</h2>
           </div>
           <div className="grid gap-10 lg:grid-cols-3">
             {valueCards.map((card) => (
@@ -258,11 +229,11 @@ export default function HomePage() {
               <div className="grid gap-6">
                 <div className="rounded-[34px] border border-black/10 bg-white p-8">
                   <p className="font-accent text-sm tracking-[0.18em] text-[#8d7240]">{t(language, { zh: "空间感", en: "Atmosphere" })}</p>
-                  <p className="mt-4 font-display text-4xl leading-tight text-[#0f2f25]">{t(language, { zh: "少一点系统感，多一点静静展开的秩序。", en: "Less dashboard noise. More composed structure." })}</p>
+                  <p className="mt-4 font-display text-4xl leading-tight text-[#0f2f25]">{t(language, { zh: "少一点系统感，多一点真实进展。", en: "Less system feel. More visible progress." })}</p>
                   <p className="mt-5 text-base leading-8 text-black/68">
                     {t(language, {
-                      zh: "这里不是为了制造刺激，而是为了让你的节奏、参与与回馈，被更安定地看见。",
-                      en: "The space is designed to reveal rhythm, participation, and rewards without feeling transactional."
+                      zh: "你将清楚看见：当前层级、回馈比例、积分余额与本周节奏提醒。一切变化，都有迹可循。",
+                      en: "You will see your tier, reward structure, points, and weekly rhythm clearly."
                     })}
                   </p>
                 </div>
@@ -284,11 +255,11 @@ export default function HomePage() {
         <section className="container py-28 md:py-[120px]">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-2xl">
-              <p className="font-accent text-sm tracking-[0.18em] text-[#8d7240]">{t(language, { zh: "本月动态", en: "This Month" })}</p>
-              <h2 className="mt-5 font-display text-4xl leading-tight text-[#0f2f25] md:text-5xl">{t(language, { zh: "活动、上新与本月会员礼遇", en: "Campaigns, launches, and member moments" })}</h2>
+              <p className="font-accent text-sm tracking-[0.18em] text-[#8d7240]">{t(language, { zh: "本月 · 空间动向", en: "This Month" })}</p>
+              <h2 className="mt-5 font-display text-4xl leading-tight text-[#0f2f25] md:text-5xl">{t(language, { zh: "新的体验正在展开。", en: "New experiences are unfolding." })}</h2>
             </div>
             <Link href="/register" className="rounded-full bg-[#123524] px-6 py-3 text-sm font-semibold text-white">
-              {t(language, { zh: "本月加入会员", en: "Join this month" })}
+              {t(language, { zh: "申请加入", en: "Apply to Join" })}
             </Link>
           </div>
           <div className="grid gap-10 lg:grid-cols-3">
@@ -309,10 +280,10 @@ export default function HomePage() {
           <div className="container py-28 md:py-[120px]">
             <div className="mx-auto max-w-4xl rounded-[36px] border border-black/10 bg-white p-8 md:p-10">
               <p className="font-accent text-sm tracking-[0.18em] text-[#8d7240]">{t(language, { zh: "会员结构说明", en: "Member Structure" })}</p>
-              <p className="mt-5 font-display text-4xl leading-tight text-[#0f2f25]">{t(language, { zh: "在加入之前，我们希望你先理解规则。", en: "Before joining, we want you to understand the structure." })}</p>
+              <p className="mt-5 font-display text-4xl leading-tight text-[#0f2f25]">{t(language, { zh: "在决定加入之前，我们希望你理解它如何运作。", en: "Before joining, we hope you understand how it works." })}</p>
               <p className="mt-4 max-w-2xl text-sm leading-8 text-black/62">
                 {t(language, {
-                  zh: "这些规则不是为了制造压力，而是为了让回馈、节奏与长期参与之间，有一套清楚而稳定的关系。",
+                  zh: "这些规则不是为了制造压力，而是为了让回馈、节奏与长期参与之间，保有一套清楚而稳定的关系。",
                   en: "These rules are designed to create clarity and continuity, not pressure."
                 })}
               </p>
@@ -324,20 +295,16 @@ export default function HomePage() {
                       answer: faqItems[0]?.answer ?? ""
                     },
                     {
-                      question: t(language, { zh: "刚跨越门槛是否即时生效？", en: faqItems[1]?.question ?? "" }),
+                      question: t(language, { zh: "若中断活跃会发生什么？", en: faqItems[1]?.question ?? "" }),
                       answer: faqItems[1]?.answer ?? ""
                     },
                     {
-                      question: t(language, { zh: "维持资格需要注意什么？", en: faqItems[2]?.question ?? "" }),
+                      question: t(language, { zh: "积分如何被合理使用？", en: faqItems[2]?.question ?? "" }),
                       answer: faqItems[2]?.answer ?? ""
                     },
                     {
-                      question: t(language, { zh: "积分如何被合理使用？", en: faqItems[3]?.question ?? "" }),
+                      question: t(language, { zh: "这套结构适合什么样的人？", en: faqItems[3]?.question ?? "" }),
                       answer: faqItems[3]?.answer ?? ""
-                    },
-                    {
-                      question: t(language, { zh: "这套结构适合什么样的人？", en: faqItems[4]?.question ?? "" }),
-                      answer: faqItems[4]?.answer ?? ""
                     }
                   ]}
                 />

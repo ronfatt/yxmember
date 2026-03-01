@@ -26,11 +26,11 @@ export const currentMonthAnnouncements: AnnouncementItem[] = [
       en: "March 2026"
     },
     title: {
-      zh: "双倍积分礼遇月",
+      zh: "双倍积分月",
       en: "Double points campaign"
     },
     description: {
-      zh: "本月会员实付订单可获得更高积分回馈，让新加入的会员在开始阶段就能感受到参与的节奏。",
+      zh: "当节奏被放大，成长也会更清晰。",
       en: "Paid member orders this month earn boosted points so new members feel immediate momentum after joining."
     },
     badge: {
@@ -45,11 +45,11 @@ export const currentMonthAnnouncements: AnnouncementItem[] = [
       en: "March 2026"
     },
     title: {
-      zh: "全新精油上新",
+      zh: "新品优先体验",
       en: "New essential oil launch"
     },
     description: {
-      zh: "会员将优先体验下一波产品上新，并在会员空间中看到更完整的使用建议与节奏提示。",
+      zh: "会员优先进入。不是抢先，而是更从容。",
       en: "Members get first access to the next product release, plus guided usage suggestions through the dashboard."
     },
     badge: {
@@ -64,11 +64,11 @@ export const currentMonthAnnouncements: AnnouncementItem[] = [
       en: "March 2026"
     },
     title: {
-      zh: "会员分享之夜",
+      zh: "分享夜",
       en: "Member sharing night"
     },
     description: {
-      zh: "一场更贴近人的会员交流夜，围绕频率故事、真实心得与长期参与中的细微收获展开。",
+      zh: "真实故事的交换。不喧哗，只真诚。",
       en: "A live community session focused on frequency stories, practical wins, and keeping the membership experience human."
     },
     badge: {

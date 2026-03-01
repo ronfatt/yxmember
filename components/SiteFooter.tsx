@@ -12,11 +12,12 @@ export default function SiteFooter() {
         </p>
         <p className="font-accent text-sm text-black/60">
           {t(language, {
-            zh: "Designed for long-term resonance.",
+            zh: "为长期回响而设计。",
             en: "Designed for long-term resonance."
           })}
         </p>
         <p>© 2026 MetaEnergy</p>
+        <p>All rights reserved.</p>
       </div>
     </footer>
   );

@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
@@ -37,6 +38,7 @@ async function addInventoryMovement(formData: FormData) {
     product_id: productId,
     movement_type: movementType,
     quantity,
+    order_id: null,
     note,
     created_by: adminUser.id
   });
@@ -54,19 +56,49 @@ async function addInventoryMovement(formData: FormData) {
   revalidatePath("/products");
 }
 
-export default async function AdminInventoryPage() {
+function createQueryString(params: Record<string, string | null | undefined>) {
+  const next = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value && value.trim()) next.set(key, value);
+  });
+  const query = next.toString();
+  return query ? `?${query}` : "";
+}
+
+export default async function AdminInventoryPage({
+  searchParams
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
-  const [{ data: products }, { data: movements }] = await Promise.all([
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const query = typeof resolvedSearchParams.q === "string" ? resolvedSearchParams.q.trim() : "";
+  const stockFilter = typeof resolvedSearchParams.stock === "string" ? resolvedSearchParams.stock : "all";
+  const focusProductId = typeof resolvedSearchParams.focus === "string" ? resolvedSearchParams.focus : "";
+  const page = Math.max(1, Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1") || 1);
+  const limit = Math.min(
+    100,
+    Math.max(10, Number(typeof resolvedSearchParams.limit === "string" ? resolvedSearchParams.limit : "20") || 20)
+  );
+
+  const [{ data: products }, { data: movements }, { data: productOrders }] = await Promise.all([
     admin
       .from("products")
-      .select("id,title,sku,stock_on_hand,track_inventory,allow_backorder,is_published,updated_at")
+      .select("id,title,sku,stock_on_hand,track_inventory,allow_backorder,is_published,updated_at,price_myr")
       .order("updated_at", { ascending: false }),
     admin
       .from("stock_movements")
-      .select("id,product_id,movement_type,quantity,note,created_at")
+      .select("id,product_id,order_id,movement_type,quantity,note,created_at")
       .order("created_at", { ascending: false })
-      .limit(150)
+      .limit(300),
+    admin
+      .from("orders")
+      .select("id,user_id,product_id,quantity,amount_total,cash_paid,payment_status,created_at")
+      .eq("order_type", "product")
+      .not("product_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(300)
   ]);
 
   const movementMap = new Map<string, typeof movements>();
@@ -76,12 +108,47 @@ export default async function AdminInventoryPage() {
     movementMap.set(movement.product_id, list);
   });
 
+  const orderMap = new Map<string, typeof productOrders>();
+  (productOrders ?? []).forEach((order) => {
+    if (!order.product_id) return;
+    const list = orderMap.get(order.product_id) ?? [];
+    list.push(order);
+    orderMap.set(order.product_id, list);
+  });
+
+  const buyerIds = Array.from(new Set((productOrders ?? []).map((order) => order.user_id).filter(Boolean)));
+  const { data: buyers } = buyerIds.length
+    ? await admin.from("users_profile").select("id,name,referral_code").in("id", buyerIds)
+    : { data: [] as Array<{ id: string; name: string | null; referral_code: string | null }> };
+  const buyerMap = new Map((buyers ?? []).map((buyer) => [buyer.id, buyer]));
+
   const trackedProducts = (products ?? []).filter((product) => product.track_inventory);
   const lowStock = trackedProducts.filter((product) => Number(product.stock_on_hand ?? 0) <= 5);
+  const unpublishedTracked = trackedProducts.filter((product) => !product.is_published);
+  const normalizedQuery = query.toLowerCase();
+  const filteredProducts = trackedProducts.filter((product) => {
+    const matchesQuery = !normalizedQuery
+      || product.title.toLowerCase().includes(normalizedQuery)
+      || (product.sku ?? "").toLowerCase().includes(normalizedQuery);
+    if (!matchesQuery) return false;
+    if (stockFilter === "low") return Number(product.stock_on_hand ?? 0) <= 5;
+    if (stockFilter === "published") return product.is_published;
+    if (stockFilter === "draft") return !product.is_published;
+    return true;
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / limit));
+  const currentPage = Math.min(page, totalPages);
+  const pagedProducts = filteredProducts.slice((currentPage - 1) * limit, currentPage * limit);
+
+  const baseParams = {
+    q: query || undefined,
+    stock: stockFilter !== "all" ? stockFilter : undefined,
+    limit: String(limit)
+  };
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-4">
         <div className="card space-y-2">
           <p className="text-sm text-black/55">{t(language, { zh: "追踪库存产品", en: "Tracked products" })}</p>
           <p className="font-display text-3xl text-[#123524]">{trackedProducts.length}</p>
@@ -97,6 +164,32 @@ export default async function AdminInventoryPage() {
           <p className="font-display text-3xl text-[#123524]">{movements?.length ?? 0}</p>
           <p className="text-sm text-black/60">{t(language, { zh: "已加载最近 150 条库存流水。", en: "Showing the latest 150 stock movements." })}</p>
         </div>
+        <div className="card space-y-3">
+          <div>
+            <p className="text-sm text-black/55">{t(language, { zh: "当前优先处理", en: "Action queue" })}</p>
+            <p className="font-display text-3xl text-[#8c3a1f]">{lowStock.length}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/inventory${createQueryString({ ...baseParams, stock: "low", page: "1" })}`}
+              className="rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524]"
+            >
+              {t(language, { zh: "一键只看低库存", en: "Show low stock only" })}
+            </Link>
+            <Link
+              href="/admin/products"
+              className="rounded-full border border-black/10 px-4 py-2 text-sm text-black/70"
+            >
+              {t(language, { zh: "管理产品资料", en: "Manage products" })}
+            </Link>
+          </div>
+          <p className="text-sm text-black/60">
+            {t(language, {
+              zh: unpublishedTracked.length ? `另有 ${unpublishedTracked.length} 项草稿产品仍在追踪库存。` : "所有追踪库存产品都已进入工作台。",
+              en: unpublishedTracked.length ? `${unpublishedTracked.length} tracked products are still in draft.` : "All tracked products are included in the workbench."
+            })}
+          </p>
+        </div>
       </section>
 
       <section className="card space-y-4">
@@ -105,10 +198,77 @@ export default async function AdminInventoryPage() {
           <p className="text-sm text-black/60">{t(language, { zh: "在这里查看当前库存、输入进出货，或直接做盘点调整。", en: "View stock on hand, log incoming or outgoing units, or make a stocktake adjustment." })}</p>
         </div>
 
+        <form className="grid gap-3 md:grid-cols-[minmax(0,1fr),180px,120px,auto]">
+          <input
+            className="rounded-full border border-black/10 bg-white px-4 py-3"
+            name="q"
+            defaultValue={query}
+            placeholder={t(language, { zh: "搜索产品名称或 SKU", en: "Search product title or SKU" })}
+          />
+          <select name="stock" defaultValue={stockFilter} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm">
+            <option value="all">{t(language, { zh: "全部状态", en: "All stock states" })}</option>
+            <option value="low">{t(language, { zh: "只看低库存", en: "Low stock only" })}</option>
+            <option value="published">{t(language, { zh: "只看已发布", en: "Published only" })}</option>
+            <option value="draft">{t(language, { zh: "只看草稿", en: "Draft only" })}</option>
+          </select>
+          <select name="limit" defaultValue={String(limit)} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm">
+            {[10, 20, 40, 80].map((option) => (
+              <option key={option} value={option}>
+                {t(language, { zh: `${option} 项`, en: `${option} rows` })}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button className="rounded-full bg-[#123524] px-5 py-3 text-sm font-semibold text-white">
+              {t(language, { zh: "筛选", en: "Filter" })}
+            </button>
+            <Link href="/admin/inventory" className="rounded-full border border-black/10 px-5 py-3 text-sm text-black/65">
+              {t(language, { zh: "清除", en: "Reset" })}
+            </Link>
+          </div>
+        </form>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-black/60">
+          <p>
+            {t(language, {
+              zh: `当前显示 ${pagedProducts.length} / ${filteredProducts.length} 项`,
+              en: `Showing ${pagedProducts.length} of ${filteredProducts.length}`
+            })}
+          </p>
+          <div className="flex items-center gap-2">
+            <span>{t(language, { zh: "页码", en: "Page" })}</span>
+            <Link
+              href={`/admin/inventory${createQueryString({ ...baseParams, page: String(Math.max(1, currentPage - 1)) })}`}
+              className={`rounded-full border px-3 py-1 ${currentPage <= 1 ? "pointer-events-none border-black/5 text-black/25" : "border-black/10 text-black/65"}`}
+            >
+              {t(language, { zh: "上一页", en: "Prev" })}
+            </Link>
+            <span className="rounded-full bg-[#edf5ef] px-3 py-1 text-jade">{currentPage} / {totalPages}</span>
+            <Link
+              href={`/admin/inventory${createQueryString({ ...baseParams, page: String(Math.min(totalPages, currentPage + 1)) })}`}
+              className={`rounded-full border px-3 py-1 ${currentPage >= totalPages ? "pointer-events-none border-black/5 text-black/25" : "border-black/10 text-black/65"}`}
+            >
+              {t(language, { zh: "下一页", en: "Next" })}
+            </Link>
+          </div>
+        </div>
+
         {trackedProducts.length ? (
           <div className="space-y-4">
-            {trackedProducts.map((product) => (
-              <div key={product.id} className="rounded-3xl border border-black/10 bg-white px-4 py-4">
+            {pagedProducts.map((product) => {
+              const productMovements = movementMap.get(product.id) ?? [];
+              const productOrdersForCard = orderMap.get(product.id) ?? [];
+              const isFocused = focusProductId === product.id;
+              const visibleMovements = isFocused ? productMovements.slice(0, 15) : productMovements.slice(0, 5);
+              const visibleOrders = isFocused ? productOrdersForCard.slice(0, 15) : productOrdersForCard.slice(0, 5);
+              const focusHref = `/admin/inventory${createQueryString({
+                ...baseParams,
+                page: String(currentPage),
+                focus: isFocused ? undefined : product.id
+              })}#product-${product.id}`;
+
+              return (
+              <div key={product.id} id={`product-${product.id}`} className="rounded-3xl border border-black/10 bg-white px-4 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="space-y-1">
                     <p className="font-display text-2xl text-[#123524]">{product.title}</p>
@@ -130,6 +290,11 @@ export default async function AdminInventoryPage() {
                       <span className="rounded-full bg-white px-3 py-1 text-black/55">
                         {product.is_published ? t(language, { zh: "已发布", en: "Published" }) : t(language, { zh: "草稿", en: "Draft" })}
                       </span>
+                      {product.price_myr ? (
+                        <span className="rounded-full bg-white px-3 py-1 text-black/55">
+                          RM {Number(product.price_myr).toFixed(2)}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <p className="text-xs text-black/45">
@@ -152,9 +317,18 @@ export default async function AdminInventoryPage() {
                   </button>
                 </form>
 
-                <div className="mt-4 space-y-2">
-                  {(movementMap.get(product.id) ?? []).slice(0, 5).length ? (
-                    (movementMap.get(product.id) ?? []).slice(0, 5).map((movement) => (
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-[#123524]">{t(language, { zh: "库存流水", en: "Stock movements" })}</p>
+                      {productMovements.length > 5 ? (
+                        <Link href={focusHref} className="text-xs text-black/55 underline underline-offset-4">
+                          {isFocused ? t(language, { zh: "收起", en: "Collapse" }) : t(language, { zh: "查看更多", en: "View more" })}
+                        </Link>
+                      ) : null}
+                    </div>
+                  {visibleMovements.length ? (
+                    visibleMovements.map((movement) => (
                       <div key={movement.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/8 bg-[#faf7f0] px-4 py-3 text-sm">
                         <div>
                           <p className="font-medium text-[#123524]">
@@ -166,6 +340,12 @@ export default async function AdminInventoryPage() {
                             {" · "}
                             {movement.quantity}
                           </p>
+                          {movement.order_id ? (
+                            <p className="text-xs text-jade">
+                              {t(language, { zh: "关联订单：", en: "Linked order: " })}
+                              {movement.order_id.slice(0, 8)}
+                            </p>
+                          ) : null}
                           <p className="text-xs text-black/50">{movement.note || t(language, { zh: "没有备注", en: "No note" })}</p>
                         </div>
                         <p className="text-xs text-black/45">
@@ -176,9 +356,54 @@ export default async function AdminInventoryPage() {
                   ) : (
                     <p className="text-sm text-black/55">{t(language, { zh: "这项产品还没有库存流水。", en: "This product has no stock movements yet." })}</p>
                   )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-[#123524]">{t(language, { zh: "产品订单明细", en: "Product order details" })}</p>
+                      {productOrdersForCard.length > 5 ? (
+                        <Link href={focusHref} className="text-xs text-black/55 underline underline-offset-4">
+                          {isFocused ? t(language, { zh: "收起", en: "Collapse" }) : t(language, { zh: "查看更多", en: "View more" })}
+                        </Link>
+                      ) : null}
+                    </div>
+                    {visibleOrders.length ? (
+                      visibleOrders.map((order) => {
+                        const buyer = buyerMap.get(order.user_id);
+                        return (
+                          <div key={order.id} className="rounded-2xl border border-black/8 bg-[#f7faf7] px-4 py-3 text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div>
+                                <p className="font-medium text-[#123524]">
+                                  {buyer?.name ?? t(language, { zh: "会员", en: "Member" })}
+                                  {buyer?.referral_code ? ` (${buyer.referral_code})` : ""}
+                                </p>
+                                <p className="text-xs text-black/50">
+                                  {t(language, { zh: "数量", en: "Qty" })} {order.quantity ?? 1}
+                                  {" · "}
+                                  RM {Number(order.amount_total ?? order.cash_paid ?? 0).toFixed(2)}
+                                  {" · "}
+                                  {order.payment_status}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-jade">#{order.id.slice(0, 8)}</p>
+                                <p className="text-xs text-black/45">
+                                  {new Date(order.created_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-black/55">{t(language, { zh: "这项产品还没有订单记录。", en: "This product has no product orders yet." })}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         ) : (
           <p className="text-sm text-black/60">{t(language, { zh: "目前没有启用库存追踪的产品。请先到产品页启用库存追踪。", en: "No products are currently using inventory tracking. Enable it from the products page first." })}</p>

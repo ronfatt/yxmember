@@ -258,6 +258,7 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
 
     const { error: movementError } = await admin.from("stock_movements").insert({
       product_id: product.id,
+      order_id: order.id,
       movement_type: "out",
       quantity,
       note: `Order ${order.id}: sold to member`,
@@ -536,6 +537,7 @@ export async function reverseMetaOrder(admin: SupabaseClient, orderId: string) {
 
       const { error: movementError } = await admin.from("stock_movements").insert({
         product_id: product.id,
+        order_id: orderId,
         movement_type: "in",
         quantity: restoreQuantity,
         note: `Order ${orderId}: stock restored after reversal`,

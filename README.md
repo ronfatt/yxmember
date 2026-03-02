@@ -265,6 +265,25 @@ Member/public display:
 3. Deploy the repository to Vercel.
 4. Create a Vercel cron or external scheduler that `POST`s to `/api/cron/keepalive` with `CRON_SECRET`.
 
+## Custom domain
+
+If you are using the production domain [https://yxenergy.my](https://yxenergy.my):
+
+1. In Vercel:
+   - add `yxenergy.my` and `www.yxenergy.my` to the project domains
+   - set `NEXT_PUBLIC_SITE_URL=https://yxenergy.my`
+   - redeploy after updating the env var
+2. In Supabase Auth:
+   - set `Site URL` to `https://yxenergy.my`
+   - add these redirect URLs:
+     - `https://yxenergy.my`
+     - `https://yxenergy.my/login`
+     - `https://yxenergy.my/register`
+     - `https://yxenergy.my/dashboard`
+     - `https://www.yxenergy.my`
+3. If you use Resend:
+   - update `EMAIL_FROM` to a sender on your domain, for example `MetaEnergy <noreply@yxenergy.my>`
+
 ## Notes
 
 - This workspace already contained a legacy `orders` table, so the MVP migration extends that table instead of dropping it.

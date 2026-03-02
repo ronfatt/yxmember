@@ -42,7 +42,7 @@ export default async function DashboardPage() {
   const supabase = createClient();
   const monthKey = format(startOfMonth(new Date()), "yyyy-MM-dd");
   const weekKey = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
   const [{ data: profile }, { data: currentMonth }, { data: latestReport }, { data: latestReminder }, { count: mentorServiceCount }] =
     await Promise.all([

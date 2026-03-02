@@ -13,6 +13,7 @@ async function createAccount(formData: FormData) {
     bank_name: String(formData.get("bank_name") || ""),
     account_name: String(formData.get("account_name") || ""),
     account_number: String(formData.get("account_number") || ""),
+    opening_balance: Number(formData.get("opening_balance") || 0),
     reference_note: String(formData.get("reference_note") || "") || null,
     sort_order: Number(formData.get("sort_order") || 0),
     is_active: formData.get("is_active") === "true"
@@ -32,6 +33,7 @@ async function updateAccount(formData: FormData) {
       bank_name: String(formData.get("bank_name") || ""),
       account_name: String(formData.get("account_name") || ""),
       account_number: String(formData.get("account_number") || ""),
+      opening_balance: Number(formData.get("opening_balance") || 0),
       reference_note: String(formData.get("reference_note") || "") || null,
       sort_order: Number(formData.get("sort_order") || 0),
       is_active: formData.get("is_active") === "true",
@@ -48,7 +50,7 @@ export default async function AdminAccountsPage() {
   const accounts = await getActivePaymentAccounts(admin);
   const { data: allAccounts } = await admin
     .from("payment_accounts")
-    .select("id,label,bank_name,account_name,account_number,reference_note,is_active,sort_order")
+    .select("id,label,bank_name,account_name,account_number,reference_note,is_active,sort_order,opening_balance")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   const fallbackAccount = buildFallbackPaymentAccount();
@@ -65,6 +67,7 @@ export default async function AdminAccountsPage() {
           <input className="rounded border p-2" name="bank_name" placeholder={t(language, { zh: "银行名称", en: "Bank name" })} required />
           <input className="rounded border p-2" name="account_name" placeholder={t(language, { zh: "账户名称", en: "Account name" })} required />
           <input className="rounded border p-2" name="account_number" placeholder={t(language, { zh: "账号", en: "Account number" })} required />
+          <input className="rounded border p-2" name="opening_balance" type="number" step="0.01" defaultValue="0" placeholder={t(language, { zh: "期初余额", en: "Opening balance" })} />
           <input className="rounded border p-2" name="reference_note" placeholder={t(language, { zh: "备注 / 付款参考", en: "Reference note" })} />
           <input className="rounded border p-2" name="sort_order" type="number" placeholder={t(language, { zh: "排序", en: "Sort order" })} defaultValue="0" />
           <select name="is_active" className="rounded border p-2 text-sm">
@@ -88,6 +91,7 @@ export default async function AdminAccountsPage() {
                 <CopyField label={t(language, { zh: "银行", en: "Bank" })} value={account.bank_name} language={language} />
                 <CopyField label={t(language, { zh: "账户名称", en: "Account name" })} value={account.account_name} language={language} />
                 <CopyField label={t(language, { zh: "账号", en: "Account number" })} value={account.account_number} language={language} />
+                <CopyField label={t(language, { zh: "期初余额", en: "Opening balance" })} value={`RM ${Number(account.opening_balance ?? 0).toFixed(2)}`} language={language} />
                 {account.reference_note ? <CopyField label={t(language, { zh: "备注", en: "Reference" })} value={account.reference_note} language={language} /> : null}
               </div>
             ))}
@@ -116,6 +120,7 @@ export default async function AdminAccountsPage() {
                 <input className="rounded border p-2" name="bank_name" defaultValue={account.bank_name} />
                 <input className="rounded border p-2" name="account_name" defaultValue={account.account_name} />
                 <input className="rounded border p-2" name="account_number" defaultValue={account.account_number} />
+                <input className="rounded border p-2" name="opening_balance" type="number" step="0.01" defaultValue={account.opening_balance ?? 0} />
                 <input className="rounded border p-2" name="reference_note" defaultValue={account.reference_note ?? ""} />
                 <input className="rounded border p-2" name="sort_order" type="number" defaultValue={account.sort_order} />
                 <select name="is_active" defaultValue={String(account.is_active)} className="rounded border p-2 text-sm">

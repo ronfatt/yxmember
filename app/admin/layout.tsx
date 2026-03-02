@@ -20,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <LanguageSwitcher currentLanguage={language} />
             <nav className="flex gap-4 text-sm">
+              <Link href="/admin/accounting">{t(language, { zh: "财务", en: "Accounting" })}</Link>
               <Link href="/admin/accounts">{t(language, { zh: "账户", en: "Accounts" })}</Link>
               <Link href="/admin/inventory">{t(language, { zh: "库存", en: "Inventory" })}</Link>
               <Link href="/admin/orders">{t(language, { zh: "订单", en: "Orders" })}</Link>

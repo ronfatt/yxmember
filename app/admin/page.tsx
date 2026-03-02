@@ -8,6 +8,15 @@ export default async function AdminIndex() {
   const language = getCurrentLanguage();
   const items = [
     {
+      href: "/admin/accounting",
+      eyebrow: t(language, { zh: "收入与支出", en: "Cash in and out" }),
+      title: t(language, { zh: "财务中心", en: "Accounting center" }),
+      description: t(language, {
+        zh: "查看订单现金收入、手动收入、支出、账户余额与月度报表。",
+        en: "Review order cash revenue, manual income, expenses, account balances, and monthly reporting."
+      })
+    },
+    {
       href: "/admin/appointments",
       eyebrow: t(language, { zh: "导师会谈", en: "Guidance sessions" }),
       title: t(language, { zh: "预约后台", en: "Appointments desk" }),

@@ -6,6 +6,7 @@ export type PaymentAccount = {
   bank_name: string;
   account_name: string;
   account_number: string;
+  opening_balance: number;
   reference_note: string | null;
   is_active: boolean;
   sort_order: number;
@@ -14,7 +15,7 @@ export type PaymentAccount = {
 export async function getActivePaymentAccounts(supabase: SupabaseClient) {
   const { data } = await supabase
     .from("payment_accounts")
-    .select("id,label,bank_name,account_name,account_number,reference_note,is_active,sort_order")
+    .select("id,label,bank_name,account_name,account_number,opening_balance,reference_note,is_active,sort_order")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -37,6 +38,7 @@ export function buildFallbackPaymentAccount() {
     bank_name: bankName ?? "",
     account_name: accountName ?? "",
     account_number: accountNumber ?? "",
+    opening_balance: 0,
     reference_note: process.env.BANK_TRANSFER_NOTE?.trim() ?? null,
     is_active: true,
     sort_order: 0

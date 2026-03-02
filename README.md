@@ -37,6 +37,8 @@ Run the Supabase SQL migrations in order:
 5. [`supabase/migrations/0005_admin_accounts_and_stock.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0005_admin_accounts_and_stock.sql)
 6. [`supabase/migrations/0006_stock_movements.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0006_stock_movements.sql)
 7. [`supabase/migrations/0007_product_order_inventory.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0007_product_order_inventory.sql)
+8. [`supabase/migrations/0008_stock_movement_order_links.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0008_stock_movement_order_links.sql)
+9. [`supabase/migrations/0009_accounting_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0009_accounting_mvp.sql)
 
 `0002_metaenergy_mvp.sql` adds:
 
@@ -130,6 +132,8 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/admin/accounts`
 - `/admin/products`
 - `/admin/inventory`
+- `/admin/accounting`
+- `/admin/accounting/reports`
 
 ## Mentor booking MVP
 
@@ -207,6 +211,32 @@ The admin backend also supports:
     - viewing current stock
     - entering stock in / stock out / stocktake adjustments
     - reviewing recent stock movement history
+
+## Accounting center MVP
+
+The admin backend now includes a first-pass accounting center:
+
+- `/admin/accounting`
+  - monthly cash overview based on:
+    - paid order cash revenue
+    - manual income entries
+    - paid expenses
+  - unified monthly ledger timeline
+  - tracked account balance cards
+  - forms to create:
+    - expense categories
+    - expenses
+    - manual income entries
+- `/admin/accounting/reports`
+  - monthly breakdown by order type
+  - expense totals by category
+
+Supporting schema:
+
+- `expense_categories`
+- `expenses`
+- `manual_income_entries`
+- `payment_accounts.opening_balance`
 
 Member/public display:
 

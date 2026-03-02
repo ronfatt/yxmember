@@ -39,6 +39,7 @@ Run the Supabase SQL migrations in order:
 7. [`supabase/migrations/0007_product_order_inventory.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0007_product_order_inventory.sql)
 8. [`supabase/migrations/0008_stock_movement_order_links.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0008_stock_movement_order_links.sql)
 9. [`supabase/migrations/0009_accounting_mvp.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0009_accounting_mvp.sql)
+10. [`supabase/migrations/0010_accounting_receipts.sql`](/Users/rms/Desktop/元像/yuanxiang%20app/supabase/migrations/0010_accounting_receipts.sql)
 
 `0002_metaenergy_mvp.sql` adds:
 
@@ -134,6 +135,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/admin/inventory`
 - `/admin/accounting`
 - `/admin/accounting/reports`
+- `/admin/accounting/reconciliation`
 
 ## Mentor booking MVP
 
@@ -230,6 +232,16 @@ The admin backend now includes a first-pass accounting center:
 - `/admin/accounting/reports`
   - monthly breakdown by order type
   - expense totals by category
+- `/admin/accounting/export`
+  - CSV export for the selected month ledger
+- `/admin/accounting/reconciliation`
+  - review pending bank transfer slips
+  - compare settled transfers with manual income and expenses
+
+This pass also adds optional receipt links for:
+
+- `expenses.receipt_url`
+- `manual_income_entries.receipt_url`
 
 Supporting schema:
 

@@ -35,14 +35,14 @@ export async function getAccountingSnapshot(admin: SupabaseClient, month: string
       .order("created_at", { ascending: false }),
     admin
       .from("manual_income_entries")
-      .select("id,title,amount_total,received_on,payment_account_id,note,source_type,status,created_at")
+      .select("id,title,amount_total,received_on,payment_account_id,note,receipt_url,source_type,status,created_at")
       .eq("status", "received")
       .gte("received_on", startDate)
       .lt("received_on", endDate)
       .order("received_on", { ascending: false }),
     admin
       .from("expenses")
-      .select("id,title,amount_total,spent_on,payment_account_id,category_id,note,status,created_at")
+      .select("id,title,amount_total,spent_on,payment_account_id,category_id,note,receipt_url,status,created_at")
       .eq("status", "paid")
       .gte("spent_on", startDate)
       .lt("spent_on", endDate)
@@ -106,7 +106,8 @@ export async function getAccountingSnapshot(admin: SupabaseClient, month: string
       title: entry.title,
       amount: Number(entry.amount_total ?? 0),
       date: entry.received_on,
-      note: entry.note ?? entry.source_type
+      note: entry.note ?? entry.source_type,
+      receiptUrl: entry.receipt_url ?? null
     })),
     ...(expenses ?? []).map((entry) => ({
       id: `expense-${entry.id}`,
@@ -114,7 +115,8 @@ export async function getAccountingSnapshot(admin: SupabaseClient, month: string
       title: entry.title,
       amount: Number(entry.amount_total ?? 0),
       date: entry.spent_on,
-      note: entry.note ?? null
+      note: entry.note ?? null,
+      receiptUrl: entry.receipt_url ?? null
     }))
   ].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
 

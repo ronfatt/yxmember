@@ -29,6 +29,7 @@ async function createExpense(formData: FormData) {
     amount_total: Number(formData.get("amount_total") || 0),
     spent_on: String(formData.get("spent_on") || ""),
     note: String(formData.get("note") || "") || null,
+    receipt_url: String(formData.get("receipt_url") || "") || null,
     status: String(formData.get("status") || "paid"),
     created_by: adminUser.id
   });
@@ -45,6 +46,7 @@ async function createManualIncome(formData: FormData) {
     amount_total: Number(formData.get("amount_total") || 0),
     received_on: String(formData.get("received_on") || ""),
     note: String(formData.get("note") || "") || null,
+    receipt_url: String(formData.get("receipt_url") || "") || null,
     source_type: String(formData.get("source_type") || "other"),
     status: String(formData.get("status") || "received"),
     created_by: adminUser.id
@@ -90,6 +92,12 @@ export default async function AdminAccountingPage({
             <button className="rounded-full bg-[#123524] px-5 py-3 text-sm font-semibold text-white">
               {t(language, { zh: "查看月份", en: "Load month" })}
             </button>
+            <Link href={`/admin/accounting/export?month=${snapshot.month}`} className="rounded-full border border-black/10 px-5 py-3 text-sm text-black/70">
+              {t(language, { zh: "导出 CSV", en: "Export CSV" })}
+            </Link>
+            <Link href={`/admin/accounting/reconciliation?month=${snapshot.month}`} className="rounded-full border border-black/10 px-5 py-3 text-sm text-black/70">
+              {t(language, { zh: "银行对账", en: "Reconciliation" })}
+            </Link>
           </form>
         </div>
 
@@ -146,6 +154,16 @@ export default async function AdminAccountingPage({
                       {item.title}
                     </p>
                     <p className="text-xs text-black/50">{item.note || t(language, { zh: "没有备注", en: "No note" })}</p>
+                    {(item as { receiptUrl?: string | null }).receiptUrl ? (
+                      <a
+                        href={(item as { receiptUrl?: string | null }).receiptUrl!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-jade underline underline-offset-4"
+                      >
+                        {t(language, { zh: "查看凭证", en: "View receipt" })}
+                      </a>
+                    ) : null}
                   </div>
                   <div className="text-right">
                     <p className={`font-medium ${item.type === "expense" ? "text-[#8c3a1f]" : "text-[#123524]"}`}>
@@ -229,6 +247,7 @@ export default async function AdminAccountingPage({
             </select>
             <input className="w-full rounded border p-2" name="amount_total" type="number" step="0.01" placeholder={t(language, { zh: "金额（RM）", en: "Amount (RM)" })} required />
             <input className="w-full rounded border p-2" name="spent_on" type="date" required />
+            <input className="w-full rounded border p-2" name="receipt_url" placeholder={t(language, { zh: "凭证链接（可选）", en: "Receipt URL (optional)" })} />
             <textarea className="w-full rounded border p-2" name="note" placeholder={t(language, { zh: "备注", en: "Note" })} />
             <select name="status" className="w-full rounded border p-2 text-sm" defaultValue="paid">
               <option value="paid">{t(language, { zh: "已支付", en: "Paid" })}</option>
@@ -253,6 +272,7 @@ export default async function AdminAccountingPage({
             </select>
             <input className="w-full rounded border p-2" name="amount_total" type="number" step="0.01" placeholder={t(language, { zh: "金额（RM）", en: "Amount (RM)" })} required />
             <input className="w-full rounded border p-2" name="received_on" type="date" required />
+            <input className="w-full rounded border p-2" name="receipt_url" placeholder={t(language, { zh: "凭证链接（可选）", en: "Receipt URL (optional)" })} />
             <select name="source_type" className="w-full rounded border p-2 text-sm" defaultValue="other">
               <option value="other">{t(language, { zh: "其他", en: "Other" })}</option>
               <option value="offline_sale">{t(language, { zh: "线下销售", en: "Offline sale" })}</option>

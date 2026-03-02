@@ -31,6 +31,9 @@ export default async function AdminAccountingReportsPage({
           <Link href={`/admin/accounting?month=${snapshot.month}`} className="rounded-full border border-black/10 px-4 py-2 text-sm text-black/70">
             {t(language, { zh: "返回财务中心", en: "Back to accounting" })}
           </Link>
+          <Link href={`/admin/accounting/export?month=${snapshot.month}`} className="rounded-full border border-black/10 px-4 py-2 text-sm text-black/70">
+            {t(language, { zh: "导出 CSV", en: "Export CSV" })}
+          </Link>
         </div>
       </section>
 

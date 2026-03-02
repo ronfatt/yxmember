@@ -1,5 +1,6 @@
 import { format, startOfMonth, startOfWeek } from "date-fns";
 import Link from "next/link";
+import { headers } from "next/headers";
 import DashboardShell from "../../components/DashboardShell";
 import FrequencyGenerator from "../../components/FrequencyGenerator";
 import ReminderGenerator from "../../components/ReminderGenerator";
@@ -40,10 +41,15 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const language = getCurrentLanguage();
   const supabase = createClient();
+  const requestHeaders = headers();
   const monthKey = format(startOfMonth(new Date()), "yyyy-MM-dd");
   const weekKey = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const forwardedProto = requestHeaders.get("x-forwarded-proto");
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const requestSiteUrl = host ? `${forwardedProto ?? "https"}://${host}` : null;
   const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL
+    requestSiteUrl
+    ?? process.env.NEXT_PUBLIC_SITE_URL
     ?? (process.env.NODE_ENV === "production" ? "https://yxenergy.my" : "http://localhost:3000")
   ).replace(/\/$/, "");
 

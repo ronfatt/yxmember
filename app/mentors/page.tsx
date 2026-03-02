@@ -1,9 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 import { t } from "../../lib/i18n/shared";
+import { createPublicMetadata } from "../../lib/metaenergy/seo";
 import { createClient } from "../../lib/supabase/server";
+
+export const metadata: Metadata = createPublicMetadata(
+  "导师",
+  "选择适合当前阶段的导师，查看元象私人导师会谈、服务时长与预约安排。",
+  "/mentors"
+);
 
 export default async function MentorsPage() {
   const language = getCurrentLanguage();

@@ -1,9 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 import { t } from "../../lib/i18n/shared";
+import { createPublicMetadata } from "../../lib/metaenergy/seo";
 import { createClient } from "../../lib/supabase/server";
+
+export const metadata: Metadata = createPublicMetadata(
+  "课程与活动",
+  "查看元象当前开放的课程、主题活动与会员场次，了解公开课程与会员体验安排。",
+  "/courses"
+);
 
 export default async function CoursesPage() {
   const language = getCurrentLanguage();

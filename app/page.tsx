@@ -1,14 +1,25 @@
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
+import type { Metadata } from "next";
 import FaqAccordion from "../components/FaqAccordion";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { currentMonthAnnouncements } from "../lib/metaenergy/announcements";
 import { t } from "../lib/i18n/shared";
 import { getCurrentLanguage } from "../lib/i18n/server";
+import { createPublicMetadata } from "../lib/metaenergy/seo";
+import { getSiteUrl } from "../lib/metaenergy/site-url";
+
+export const metadata: Metadata = createPublicMetadata(
+  "元象能量会员系统",
+  "为长期体验而设计的成长空间，整合会员、课程活动、导师会谈、推荐回馈与稳定参与结构。",
+  "/"
+);
 
 export default function HomePage() {
   const language = getCurrentLanguage();
+  const siteUrl = getSiteUrl().toString();
   const valueCards = [
     {
       icon: "RM",
@@ -70,9 +81,40 @@ export default function HomePage() {
     zh: "仅展示结构与层级逻辑，真实数据将在登录后呈现。",
     en: "This shows structure and hierarchy only. Actual data appears after login."
   });
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "元象能量会员系统",
+        alternateName: "MetaEnergy",
+        url: siteUrl,
+        logo: `${siteUrl}/opengraph-image`,
+        description: "为长期体验而设计的成长空间，整合会员、课程活动、导师会谈、推荐回馈与稳定参与结构。"
+      },
+      {
+        "@type": "WebSite",
+        name: "元象能量会员系统",
+        url: siteUrl,
+        inLanguage: ["zh-CN", "en"]
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer
+          }
+        }))
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-[#f6f1e8]">
+      <Script id="home-structured-data" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader />
       <main>
         <section className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(200,165,92,0.15),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(74,120,91,0.22),_transparent_26%),linear-gradient(135deg,_#0f2f25_0%,_#17382e_42%,_#0a1712_100%)] text-white">

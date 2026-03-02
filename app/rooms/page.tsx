@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 import { t } from "../../lib/i18n/shared";
+import { createPublicMetadata } from "../../lib/metaenergy/seo";
 import { createClient } from "../../lib/supabase/server";
 import RoomSlots from "../../components/RoomSlots";
+
+export const metadata: Metadata = createPublicMetadata(
+  "调频空间",
+  "查看元象调频空间开放时段与可预约名额，了解当前开放的房间时段安排。",
+  "/rooms"
+);
 
 export default async function RoomsPage() {
   const language = getCurrentLanguage();

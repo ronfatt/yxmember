@@ -1,9 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 import { t } from "../../lib/i18n/shared";
+import { createPublicMetadata } from "../../lib/metaenergy/seo";
 import { createClient } from "../../lib/supabase/server";
+
+export const metadata: Metadata = createPublicMetadata(
+  "产品",
+  "浏览元象当前开放的产品、库存状态与预订安排，查看现货、低库存与可预订项目。",
+  "/products"
+);
 
 export default async function ProductsPage() {
   const language = getCurrentLanguage();

@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 import { t } from "../../lib/i18n/shared";
+import { createPublicMetadata } from "../../lib/metaenergy/seo";
 import { createClient } from "../../lib/supabase/server";
+
+export const metadata: Metadata = createPublicMetadata(
+  "会员见证",
+  "阅读元象会员的真实见证与体验反馈，了解课程、会谈与会员空间的实际感受。",
+  "/testimonials"
+);
 
 export default async function TestimonialsPage() {
   const language = getCurrentLanguage();

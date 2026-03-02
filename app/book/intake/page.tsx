@@ -15,14 +15,15 @@ function getSingle(value: string | string[] | undefined) {
 export default async function BookingIntakePage({
   searchParams
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireUser();
   const language = getCurrentLanguage();
-  const mentorId = getSingle(searchParams.mentorId);
-  const serviceId = getSingle(searchParams.serviceId);
-  const slot = getSingle(searchParams.slot);
-  const sessionMode = getSingle(searchParams.sessionMode) as "online" | "offline" | undefined;
+  const resolvedSearchParams = await searchParams;
+  const mentorId = getSingle(resolvedSearchParams.mentorId);
+  const serviceId = getSingle(resolvedSearchParams.serviceId);
+  const slot = getSingle(resolvedSearchParams.slot);
+  const sessionMode = getSingle(resolvedSearchParams.sessionMode) as "online" | "offline" | undefined;
 
   if (!mentorId || !serviceId || !slot || !sessionMode) {
     redirect("/mentors");

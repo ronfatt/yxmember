@@ -4,10 +4,11 @@ import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
 import { createClient } from "../../../lib/supabase/server";
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const language = getCurrentLanguage();
   const supabase = createClient();
-  const { data: product } = await supabase.from("products").select("*").eq("id", params.id).single();
+  const resolvedParams = await params;
+  const { data: product } = await supabase.from("products").select("*").eq("id", resolvedParams.id).single();
 
   if (!product) {
     return (

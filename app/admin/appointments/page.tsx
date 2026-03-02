@@ -9,16 +9,17 @@ export const dynamic = "force-dynamic";
 export default async function AdminAppointmentsPage({
   searchParams
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
+  const resolvedSearchParams = await searchParams;
   const query = admin
     .from("appointments")
     .select("id,user_id,start_at,end_at,status,session_mode,price_total,cash_due,points_used,balance_paid,deposit_paid,created_at,mentors(display_name),mentor_services(name,duration_min)")
     .order("start_at", { ascending: false });
 
-  if (searchParams.status) query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status) query.eq("status", resolvedSearchParams.status);
   const { data: appointments } = await query;
 
   const userIds = [...new Set((appointments ?? []).map((entry) => entry.user_id))];

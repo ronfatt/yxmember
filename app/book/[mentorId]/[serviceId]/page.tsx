@@ -12,13 +12,14 @@ export const dynamic = "force-dynamic";
 export default async function AppointmentSlotPage({
   params
 }: {
-  params: { mentorId: string; serviceId: string };
+  params: Promise<{ mentorId: string; serviceId: string }>;
 }) {
   await requireUser();
   const language = getCurrentLanguage();
   const supabase = createClient();
-  const { mentor, service } = await getMentorService(supabase, params.mentorId, params.serviceId);
-  const slots = await getBookableSlots(supabase, params.mentorId, service.duration_min, new Date(), 14);
+  const resolvedParams = await params;
+  const { mentor, service } = await getMentorService(supabase, resolvedParams.mentorId, resolvedParams.serviceId);
+  const slots = await getBookableSlots(supabase, resolvedParams.mentorId, service.duration_min, new Date(), 14);
 
   const grouped = slots.reduce<Record<string, typeof slots>>((acc, slot) => {
     acc[slot.dateKey] = [...(acc[slot.dateKey] ?? []), slot];

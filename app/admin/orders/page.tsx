@@ -8,13 +8,13 @@ import { reverseMetaOrder } from "../../../lib/metaenergy/service";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 type AdminOrdersPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     source?: string;
     buyer?: string;
     referrer?: string;
     limit?: string;
     status?: string;
-  };
+  }>;
 };
 
 async function reverseOrderAction(formData: FormData) {
@@ -33,11 +33,12 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   await requireAdmin();
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
-  const sourceFilter = searchParams?.source === "referred" || searchParams?.source === "personal" ? searchParams.source : "all";
-  const buyerFilter = searchParams?.buyer ?? "";
-  const referrerFilter = searchParams?.referrer ?? "";
-  const statusFilter = ["all", "PAID", "REFUNDED"].includes(searchParams?.status ?? "") ? searchParams?.status ?? "all" : "all";
-  const limit = Math.min(Math.max(Number(searchParams?.limit ?? "20"), 5), 100);
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const sourceFilter = resolvedSearchParams.source === "referred" || resolvedSearchParams.source === "personal" ? resolvedSearchParams.source : "all";
+  const buyerFilter = resolvedSearchParams.buyer ?? "";
+  const referrerFilter = resolvedSearchParams.referrer ?? "";
+  const statusFilter = ["all", "PAID", "REFUNDED"].includes(resolvedSearchParams.status ?? "") ? resolvedSearchParams.status ?? "all" : "all";
+  const limit = Math.min(Math.max(Number(resolvedSearchParams.limit ?? "20"), 5), 100);
 
   const [{ data: users }, { data: allOrders }, { data: referralOrders }, { data: products }] = await Promise.all([
     admin.from("users_profile").select("id,name,referral_code,referred_by").order("created_at", { ascending: false }),

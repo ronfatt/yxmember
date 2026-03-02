@@ -5,14 +5,15 @@ import { t } from "../../../lib/i18n/shared";
 import { createClient } from "../../../lib/supabase/server";
 import CourseSessions from "../../../components/CourseSessions";
 
-export default async function CourseDetailPage({ params }: { params: { id: string } }) {
+export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const language = getCurrentLanguage();
   const supabase = createClient();
-  const { data: course } = await supabase.from("courses").select("*").eq("id", params.id).single();
+  const resolvedParams = await params;
+  const { data: course } = await supabase.from("courses").select("*").eq("id", resolvedParams.id).single();
   const { data: sessions } = await supabase
     .from("course_sessions")
     .select("*")
-    .eq("course_id", params.id)
+    .eq("course_id", resolvedParams.id)
     .eq("status", "PUBLISHED")
     .order("start_at", { ascending: true });
 

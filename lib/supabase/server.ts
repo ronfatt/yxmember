@@ -2,7 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export function createClient() {
-  const cookieStore = cookies();
+  const cookieStore = cookies() as unknown as {
+    get(name: string): { value?: string } | undefined;
+    set(input: { name: string; value: string } & Record<string, unknown>): void;
+  };
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

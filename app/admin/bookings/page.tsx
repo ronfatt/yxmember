@@ -3,11 +3,12 @@ import { t } from "../../../lib/i18n/shared";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 import Link from "next/link";
 
-export default async function AdminBookingsPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminBookingsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
+  const resolvedSearchParams = await searchParams;
   const bookingsQuery = admin.from("bookings").select("*").order("created_at", { ascending: false });
-  if (searchParams.status) bookingsQuery.eq("booking_status", searchParams.status);
+  if (resolvedSearchParams.status) bookingsQuery.eq("booking_status", resolvedSearchParams.status);
   const { data: bookings } = await bookingsQuery;
 
   const roomQuery = admin.from("room_bookings").select("*").order("created_at", { ascending: false });

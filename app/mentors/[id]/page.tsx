@@ -6,15 +6,16 @@ import { createClient } from "../../../lib/supabase/server";
 import Link from "next/link";
 import { formatMoney } from "../../../lib/metaenergy/helpers";
 
-export default async function MentorDetailPage({ params }: { params: { id: string } }) {
+export default async function MentorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const language = getCurrentLanguage();
   const supabase = createClient();
+  const resolvedParams = await params;
   const [{ data: mentor }, { data: services }] = await Promise.all([
-    supabase.from("mentors").select("*").eq("id", params.id).single(),
+    supabase.from("mentors").select("*").eq("id", resolvedParams.id).single(),
     supabase
       .from("mentor_services")
       .select("id,name,duration_min,price_total,deposit_amount,allow_points")
-      .eq("mentor_id", params.id)
+      .eq("mentor_id", resolvedParams.id)
       .eq("active", true)
       .order("duration_min", { ascending: true })
   ]);

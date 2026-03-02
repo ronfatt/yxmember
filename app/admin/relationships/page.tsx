@@ -18,12 +18,12 @@ type RelationshipProfile = {
 };
 
 type RelationshipsPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     limit?: string;
     page?: string;
     linked?: string;
-  };
+  }>;
 };
 
 async function updateUpstreamAction(formData: FormData) {
@@ -44,10 +44,11 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
   await requireAdmin();
   const language = getCurrentLanguage();
   const admin = supabaseAdmin();
-  const query = (searchParams?.q ?? "").trim().toLowerCase();
-  const linkedFilter = searchParams?.linked === "unlinked" ? "unlinked" : searchParams?.linked === "linked" ? "linked" : "all";
-  const limit = Math.min(Math.max(Number(searchParams?.limit ?? "25"), 10), 100);
-  const page = Math.max(Number(searchParams?.page ?? "1"), 1);
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const query = (resolvedSearchParams.q ?? "").trim().toLowerCase();
+  const linkedFilter = resolvedSearchParams.linked === "unlinked" ? "unlinked" : resolvedSearchParams.linked === "linked" ? "linked" : "all";
+  const limit = Math.min(Math.max(Number(resolvedSearchParams.limit ?? "25"), 10), 100);
+  const page = Math.max(Number(resolvedSearchParams.page ?? "1"), 1);
 
   const { data: profiles } = await admin
     .from("users_profile")
@@ -133,7 +134,7 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
         <form className="grid gap-3 lg:grid-cols-[1.5fr,0.8fr,0.5fr,auto,auto]">
           <input
             name="q"
-            defaultValue={searchParams?.q ?? ""}
+            defaultValue={resolvedSearchParams.q ?? ""}
             placeholder={language === "en" ? "Search member, code, or upstream" : "搜索会员、推荐码或上级"}
             className="rounded-2xl border border-black/10 bg-white px-4 py-3"
           />
@@ -242,7 +243,7 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
         <div className="flex items-center gap-2">
           {currentPage > 1 ? (
             <a
-              href={`/admin/relationships?q=${encodeURIComponent(searchParams?.q ?? "")}&linked=${linkedFilter}&limit=${limit}&page=${currentPage - 1}`}
+              href={`/admin/relationships?q=${encodeURIComponent(resolvedSearchParams.q ?? "")}&linked=${linkedFilter}&limit=${limit}&page=${currentPage - 1}`}
               className="rounded-full border border-black/10 bg-white px-4 py-2"
             >
               {t(language, { zh: "上一页", en: "Previous" })}
@@ -250,7 +251,7 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
           ) : null}
           {currentPage < totalPages ? (
             <a
-              href={`/admin/relationships?q=${encodeURIComponent(searchParams?.q ?? "")}&linked=${linkedFilter}&limit=${limit}&page=${currentPage + 1}`}
+              href={`/admin/relationships?q=${encodeURIComponent(resolvedSearchParams.q ?? "")}&linked=${linkedFilter}&limit=${limit}&page=${currentPage + 1}`}
               className="rounded-full border border-black/10 bg-white px-4 py-2"
             >
               {t(language, { zh: "下一页", en: "Next" })}

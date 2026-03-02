@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
-  const code = params.code.toUpperCase();
+  const resolvedParams = await params;
+  const code = resolvedParams.code.toUpperCase();
   const url = new URL(`/register?ref=${encodeURIComponent(code)}`, request.url);
   const response = NextResponse.redirect(url);
 

@@ -21,16 +21,17 @@ function getMulti(value: string | string[] | undefined) {
 export default async function BookingConfirmPage({
   searchParams
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser();
   const language = getCurrentLanguage();
-  const mentorId = getSingle(searchParams.mentorId);
-  const serviceId = getSingle(searchParams.serviceId);
-  const slot = getSingle(searchParams.slot);
-  const sessionMode = getSingle(searchParams.sessionMode) as "online" | "offline" | undefined;
-  const intention = getSingle(searchParams.intention);
-  const desiredOutcome = getSingle(searchParams.desiredOutcome);
+  const resolvedSearchParams = await searchParams;
+  const mentorId = getSingle(resolvedSearchParams.mentorId);
+  const serviceId = getSingle(resolvedSearchParams.serviceId);
+  const slot = getSingle(resolvedSearchParams.slot);
+  const sessionMode = getSingle(resolvedSearchParams.sessionMode) as "online" | "offline" | undefined;
+  const intention = getSingle(resolvedSearchParams.intention);
+  const desiredOutcome = getSingle(resolvedSearchParams.desiredOutcome);
 
   if (!mentorId || !serviceId || !slot || !sessionMode || !intention || !desiredOutcome) {
     redirect("/mentors");
@@ -41,9 +42,9 @@ export default async function BookingConfirmPage({
     redirect(`/book/${mentorId}/${serviceId}`);
   }
 
-  const shareBirthday = getSingle(searchParams.shareBirthday) === "1";
-  const allowRecording = getSingle(searchParams.allowRecording) === "1";
-  const themes = getMulti(searchParams.theme);
+  const shareBirthday = getSingle(resolvedSearchParams.shareBirthday) === "1";
+  const allowRecording = getSingle(resolvedSearchParams.allowRecording) === "1";
+  const themes = getMulti(resolvedSearchParams.theme);
 
   const supabase = createClient();
   const [{ mentor, service }, { data: profile }] = await Promise.all([

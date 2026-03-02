@@ -76,29 +76,39 @@ export default async function AdminInventoryPage({
   const query = typeof resolvedSearchParams.q === "string" ? resolvedSearchParams.q.trim() : "";
   const stockFilter = typeof resolvedSearchParams.stock === "string" ? resolvedSearchParams.stock : "all";
   const focusProductId = typeof resolvedSearchParams.focus === "string" ? resolvedSearchParams.focus : "";
+  const fromDate = typeof resolvedSearchParams.from === "string" ? resolvedSearchParams.from : "";
+  const toDate = typeof resolvedSearchParams.to === "string" ? resolvedSearchParams.to : "";
   const page = Math.max(1, Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1") || 1);
   const limit = Math.min(
     100,
     Math.max(10, Number(typeof resolvedSearchParams.limit === "string" ? resolvedSearchParams.limit : "20") || 20)
   );
 
+  let movementQuery = admin
+    .from("stock_movements")
+    .select("id,product_id,order_id,movement_type,quantity,note,created_at")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (fromDate) movementQuery = movementQuery.gte("created_at", `${fromDate}T00:00:00+08:00`);
+  if (toDate) movementQuery = movementQuery.lte("created_at", `${toDate}T23:59:59.999+08:00`);
+
+  let orderQuery = admin
+    .from("orders")
+    .select("id,user_id,product_id,quantity,amount_total,cash_paid,payment_status,created_at")
+    .eq("order_type", "product")
+    .not("product_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (fromDate) orderQuery = orderQuery.gte("created_at", `${fromDate}T00:00:00+08:00`);
+  if (toDate) orderQuery = orderQuery.lte("created_at", `${toDate}T23:59:59.999+08:00`);
+
   const [{ data: products }, { data: movements }, { data: productOrders }] = await Promise.all([
     admin
       .from("products")
       .select("id,title,sku,stock_on_hand,track_inventory,allow_backorder,is_published,updated_at,price_myr")
       .order("updated_at", { ascending: false }),
-    admin
-      .from("stock_movements")
-      .select("id,product_id,order_id,movement_type,quantity,note,created_at")
-      .order("created_at", { ascending: false })
-      .limit(300),
-    admin
-      .from("orders")
-      .select("id,user_id,product_id,quantity,amount_total,cash_paid,payment_status,created_at")
-      .eq("order_type", "product")
-      .not("product_id", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(300)
+    movementQuery,
+    orderQuery
   ]);
 
   const movementMap = new Map<string, typeof movements>();
@@ -143,6 +153,8 @@ export default async function AdminInventoryPage({
   const baseParams = {
     q: query || undefined,
     stock: stockFilter !== "all" ? stockFilter : undefined,
+    from: fromDate || undefined,
+    to: toDate || undefined,
     limit: String(limit)
   };
 
@@ -162,7 +174,10 @@ export default async function AdminInventoryPage({
         <div className="card space-y-2">
           <p className="text-sm text-black/55">{t(language, { zh: "最近流水", en: "Recent movements" })}</p>
           <p className="font-display text-3xl text-[#123524]">{movements?.length ?? 0}</p>
-          <p className="text-sm text-black/60">{t(language, { zh: "已加载最近 150 条库存流水。", en: "Showing the latest 150 stock movements." })}</p>
+          <p className="text-sm text-black/60">{t(language, {
+            zh: fromDate || toDate ? "已按日期筛选库存流水与产品订单。" : "当前显示最近 500 条库存流水。",
+            en: fromDate || toDate ? "Movements and product orders are filtered by date." : "Showing the latest 500 stock movements."
+          })}</p>
         </div>
         <div className="card space-y-3">
           <div>
@@ -198,7 +213,7 @@ export default async function AdminInventoryPage({
           <p className="text-sm text-black/60">{t(language, { zh: "在这里查看当前库存、输入进出货，或直接做盘点调整。", en: "View stock on hand, log incoming or outgoing units, or make a stocktake adjustment." })}</p>
         </div>
 
-        <form className="grid gap-3 md:grid-cols-[minmax(0,1fr),180px,120px,auto]">
+        <form className="grid gap-3 md:grid-cols-[minmax(0,1fr),180px,160px,160px,120px,auto]">
           <input
             className="rounded-full border border-black/10 bg-white px-4 py-3"
             name="q"
@@ -211,6 +226,20 @@ export default async function AdminInventoryPage({
             <option value="published">{t(language, { zh: "只看已发布", en: "Published only" })}</option>
             <option value="draft">{t(language, { zh: "只看草稿", en: "Draft only" })}</option>
           </select>
+          <input
+            type="date"
+            name="from"
+            defaultValue={fromDate}
+            className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm"
+            aria-label={t(language, { zh: "开始日期", en: "From date" })}
+          />
+          <input
+            type="date"
+            name="to"
+            defaultValue={toDate}
+            className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm"
+            aria-label={t(language, { zh: "结束日期", en: "To date" })}
+          />
           <select name="limit" defaultValue={String(limit)} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm">
             {[10, 20, 40, 80].map((option) => (
               <option key={option} value={option}>
@@ -227,6 +256,28 @@ export default async function AdminInventoryPage({
             </Link>
           </div>
         </form>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/admin/inventory/export${createQueryString({
+              q: query || undefined,
+              stock: stockFilter !== "all" ? stockFilter : undefined,
+              from: fromDate || undefined,
+              to: toDate || undefined
+            })}`}
+            className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-black/70"
+          >
+            {t(language, { zh: "导出库存 CSV", en: "Export inventory CSV" })}
+          </Link>
+          {(fromDate || toDate) ? (
+            <span className="text-xs text-black/50">
+              {t(language, {
+                zh: `日期范围：${fromDate || "…"} 至 ${toDate || "…"} `,
+                en: `Date range: ${fromDate || "…"} to ${toDate || "…"}`
+              })}
+            </span>
+          ) : null}
+        </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-black/60">
           <p>
@@ -301,6 +352,15 @@ export default async function AdminInventoryPage({
                     {t(language, { zh: "更新于：", en: "Updated: " })}
                     {new Date(product.updated_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}
                   </p>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    href={`/admin/inventory/${product.id}${createQueryString({ from: fromDate || undefined, to: toDate || undefined })}`}
+                    className="rounded-full border border-black/10 px-4 py-2 text-sm text-black/70"
+                  >
+                    {t(language, { zh: "查看库存详情", en: "Open stock detail" })}
+                  </Link>
                 </div>
 
                 <form action={addInventoryMovement} className="mt-4 grid gap-3 md:grid-cols-[0.9fr,0.8fr,1fr,auto]">

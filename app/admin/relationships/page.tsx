@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
 type RelationshipProfile = {
   id: string;
   name: string | null;
+  username_id: string | null;
+  phone: string | null;
   referral_code: string;
   referred_by: string | null;
   created_at: string;
@@ -50,16 +53,24 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
   const limit = Math.min(Math.max(Number(resolvedSearchParams.limit ?? "25"), 10), 100);
   const page = Math.max(Number(resolvedSearchParams.page ?? "1"), 1);
 
-  const { data: profiles } = await admin
+  const [{ data: profiles }, { data: users }] = await Promise.all([
+    admin
     .from("users_profile")
-    .select("id,name,referral_code,referred_by,created_at,total_referred_sales,tier_rate")
-    .order("created_at", { ascending: true });
+    .select("id,name,username_id,phone,referral_code,referred_by,created_at,total_referred_sales,tier_rate")
+    .order("created_at", { ascending: true }),
+    admin.from("users").select("id,email,phone")
+  ]);
+
+  const userMap = new Map((users ?? []).map((user) => [user.id, { email: user.email ?? null, phone: user.phone ?? null }]));
 
   const profileMap = new Map(
     (profiles ?? []).map((profile) => [
       profile.id,
       {
         name: profile.name ?? t(language, { zh: "会员", en: "Member" }),
+        usernameId: profile.username_id,
+        phone: profile.phone ?? userMap.get(profile.id)?.phone ?? null,
+        email: userMap.get(profile.id)?.email ?? null,
         referralCode: profile.referral_code,
         totalReferredSales: Number(profile.total_referred_sales ?? 0),
         tierRate: Number(profile.tier_rate ?? 0)
@@ -81,7 +92,10 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
     const queryMatches =
       !query ||
       (profile.name ?? "").toLowerCase().includes(query) ||
+      (profile.username_id ?? "").toLowerCase().includes(query) ||
+      (profile.phone ?? userMap.get(profile.id)?.phone ?? "").toLowerCase().includes(query) ||
       profile.referral_code.toLowerCase().includes(query) ||
+      (userMap.get(profile.id)?.email ?? "").toLowerCase().includes(query) ||
       (upstream?.name ?? "").toLowerCase().includes(query) ||
       (upstream?.referralCode ?? "").toLowerCase().includes(query);
 
@@ -183,7 +197,12 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
                     <tr key={profile.id} className="border-t border-black/8 align-top">
                       <td className="px-4 py-4">
                         <p className="font-medium text-[#123524]">{profile.name ?? t(language, { zh: "会员", en: "Member" })}</p>
-                        <p className="text-xs uppercase tracking-[0.16em] text-black/45">{profile.referral_code}</p>
+                        <p className="text-xs tracking-[0.16em] text-black/45">{profile.username_id ? `@${profile.username_id}` : profile.referral_code}</p>
+                        <p className="mt-1 text-xs text-black/45">{userMap.get(profile.id)?.email ?? "-"}</p>
+                        {profile.phone ?? userMap.get(profile.id)?.phone ? <p className="mt-1 text-xs text-black/45">{profile.phone ?? userMap.get(profile.id)?.phone}</p> : null}
+                        <Link href={`/admin/members/${profile.id}`} className="mt-2 inline-flex text-xs font-semibold text-[#123524] underline underline-offset-4">
+                          {t(language, { zh: "查看详情", en: "View details" })}
+                        </Link>
                       </td>
                       <td className="px-4 py-4 text-black/70">
                         {upstream ? buildMemberLabel(language, upstream.name, upstream.referralCode) : t(language, { zh: "没有上级", en: "No upstream" })}

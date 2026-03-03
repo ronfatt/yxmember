@@ -31,6 +31,6 @@ export function formatPercent(rate: number | null | undefined) {
 export function generateReferralCode(seed: string) {
   return seed
     .replace(/[^a-zA-Z0-9]/g, "")
-    .toUpperCase()
+    .toLowerCase()
     .slice(0, 10);
 }

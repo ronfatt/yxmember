@@ -5,7 +5,7 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const resolvedParams = await params;
-  const code = resolvedParams.code.toUpperCase();
+  const code = resolvedParams.code.toLowerCase();
   const url = new URL(`/register?ref=${encodeURIComponent(code)}`, request.url);
   const response = NextResponse.redirect(url);
 

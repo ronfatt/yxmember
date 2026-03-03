@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { createClient } from "../lib/supabase/client";
 import type { Language } from "../lib/i18n/shared";
 import { normalizeBirthday } from "../lib/metaenergy/birthday";
+import { isValidUsernameId, normalizeUsernameId } from "../lib/metaenergy/username";
 
 function getReferralCodeFromCookie() {
   if (typeof document === "undefined") return "";
@@ -20,29 +21,71 @@ function getReferralCodeFromCookie() {
 
 export default function RegisterForm({ language }: { language: Language }) {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [usernameId, setUsernameId] = useState("");
+  const [phone, setPhone] = useState("");
   const [birthday, setBirthday] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  const [usernameHint, setUsernameHint] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setReferralCode((params.get("ref") ?? getReferralCodeFromCookie() ?? "").toUpperCase());
+    setReferralCode((params.get("ref") ?? getReferralCodeFromCookie() ?? "").toLowerCase());
   }, []);
+
+  const checkUsername = async (value: string) => {
+    const normalized = normalizeUsernameId(value);
+    if (!normalized) {
+      setUsernameHint(null);
+      return normalized;
+    }
+
+    if (!isValidUsernameId(normalized)) {
+      setUsernameHint(language === "en" ? "Use 4-20 lowercase letters or numbers." : "请输入 4-20 位小写字母或数字。");
+      return normalized;
+    }
+
+    const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(normalized)}`);
+    const result = (await response.json()) as { available?: boolean; normalized?: string };
+
+    if (!result.available) {
+      setUsernameHint(language === "en" ? "This username ID is already taken." : "这个用户名 ID 已被使用。");
+    } else {
+      setUsernameHint(language === "en" ? "Username ID is available." : "这个用户名 ID 可以使用。");
+    }
+
+    return result.normalized ?? normalized;
+  };
 
   const handleRegister = async () => {
     try {
       setLoading(true);
       const supabase = createClient();
       const safeBirthday = normalizeBirthday(birthday);
+      const safeUsernameId = normalizeUsernameId(usernameId);
+
+      if (!isValidUsernameId(safeUsernameId)) {
+        throw new Error(language === "en" ? "Username ID must be 4-20 lowercase letters or numbers." : "用户名 ID 需为 4-20 位小写字母或数字。");
+      }
+
+      const checkedUsername = await checkUsername(safeUsernameId);
+      if (!isValidUsernameId(checkedUsername)) {
+        throw new Error(language === "en" ? "Please choose a valid username ID." : "请选择正确的用户名 ID。");
+      }
+      if (usernameHint && (usernameHint.includes("已被使用") || usernameHint.includes("already taken"))) {
+        throw new Error(usernameHint);
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
+            name: checkedUsername,
+            username_id: checkedUsername,
+            phone: phone.trim() || null,
             birthday: safeBirthday || null,
             referred_code: referralCode || null
           }
@@ -94,14 +137,38 @@ export default function RegisterForm({ language }: { language: Language }) {
         }}
       >
         <label className="block">
-          <span className="text-xs font-medium tracking-[0.12em] text-[#0f2f24]/78">{language === "en" ? "Full name" : "姓名"}</span>
+          <span className="text-xs font-medium tracking-[0.12em] text-[#0f2f24]/78">{language === "en" ? "Username ID" : "用户名 ID"}</span>
           <div className="mt-2 rounded-[24px] border border-[rgba(200,165,92,0.22)] bg-[#fbf8f1] transition focus-within:border-[rgba(200,165,92,0.55)] focus-within:ring-4 focus-within:ring-[rgba(200,165,92,0.16)]">
             <input
               className="w-full bg-transparent px-5 py-4 text-[#0f2f24] outline-none"
               type="text"
-              placeholder={language === "en" ? "Enter your full name" : "请输入你的姓名"}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+              placeholder={language === "en" ? "letters + numbers only" : "只可使用小写字母 + 数字"}
+              value={usernameId}
+              onChange={(event) => {
+                setUsernameId(normalizeUsernameId(event.target.value));
+                setUsernameHint(null);
+              }}
+              onBlur={async () => {
+                const normalized = await checkUsername(usernameId);
+                setUsernameId(normalized);
+              }}
+            />
+          </div>
+          <p className="mt-2 text-xs leading-6 text-black/50">
+            {language === "en" ? "Unique ID. Use 4-20 lowercase letters or numbers." : "唯一用户名 ID。请使用 4-20 位小写字母或数字。"}
+          </p>
+          {usernameHint ? <p className="mt-1 text-xs text-[#8c3a1f]">{usernameHint}</p> : null}
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-medium tracking-[0.12em] text-[#0f2f24]/78">{language === "en" ? "Mobile number (optional)" : "手机号码（可选）"}</span>
+          <div className="mt-2 rounded-[24px] border border-[rgba(200,165,92,0.22)] bg-[#fbf8f1] transition focus-within:border-[rgba(200,165,92,0.55)] focus-within:ring-4 focus-within:ring-[rgba(200,165,92,0.16)]">
+            <input
+              className="w-full bg-transparent px-5 py-4 text-[#0f2f24] outline-none"
+              type="tel"
+              placeholder={language === "en" ? "Optional mobile number" : "选填手机号码"}
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
             />
           </div>
         </label>

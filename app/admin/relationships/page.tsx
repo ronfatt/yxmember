@@ -13,6 +13,12 @@ type RelationshipProfile = {
   name: string | null;
   username_id: string | null;
   phone: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
   referral_code: string;
   referred_by: string | null;
   created_at: string;
@@ -56,7 +62,7 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
   const [{ data: profiles }, { data: users }] = await Promise.all([
     admin
     .from("users_profile")
-    .select("id,name,username_id,phone,referral_code,referred_by,created_at,total_referred_sales,tier_rate")
+    .select("id,name,username_id,phone,address_line1,address_line2,city,state,postal_code,country,referral_code,referred_by,created_at,total_referred_sales,tier_rate")
     .order("created_at", { ascending: true }),
     admin.from("users").select("id,email,phone")
   ]);
@@ -96,6 +102,18 @@ export default async function AdminRelationshipsPage({ searchParams }: Relations
       (profile.phone ?? userMap.get(profile.id)?.phone ?? "").toLowerCase().includes(query) ||
       profile.referral_code.toLowerCase().includes(query) ||
       (userMap.get(profile.id)?.email ?? "").toLowerCase().includes(query) ||
+      [
+        profile.address_line1,
+        profile.address_line2,
+        profile.city,
+        profile.state,
+        profile.postal_code,
+        profile.country
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query) ||
       (upstream?.name ?? "").toLowerCase().includes(query) ||
       (upstream?.referralCode ?? "").toLowerCase().includes(query);
 

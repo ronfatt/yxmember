@@ -26,7 +26,8 @@ async function updateMemberContactAction(formData: FormData) {
       city: String(formData.get("city") || "").trim() || null,
       state: String(formData.get("state") || "").trim() || null,
       postal_code: String(formData.get("postal_code") || "").trim() || null,
-      country: String(formData.get("country") || "").trim() || null
+      country: String(formData.get("country") || "").trim() || null,
+      internal_note: String(formData.get("internal_note") || "").trim() || null
     })
     .eq("id", memberId);
 
@@ -63,7 +64,7 @@ export default async function AdminMemberDetailPage({ params }: MemberDetailPage
 
   const { data: profile } = await admin
     .from("users_profile")
-    .select("id,name,username_id,phone,birthday,referral_code,referred_by,total_referred_sales,tier_rate,created_at,address_line1,address_line2,city,state,postal_code,country")
+    .select("id,name,username_id,phone,birthday,referral_code,referred_by,total_referred_sales,tier_rate,created_at,address_line1,address_line2,city,state,postal_code,country,internal_note")
     .eq("id", id)
     .single();
 
@@ -71,15 +72,51 @@ export default async function AdminMemberDetailPage({ params }: MemberDetailPage
     notFound();
   }
 
-  const [{ data: member }, { data: upstream }, { count: downlineCount }] = await Promise.all([
+  const [{ data: member }, { data: upstream }, { count: downlineCount }, { data: orders }, { data: appointments }, { data: courseSessions }, { data: courses }, { data: mentors }] = await Promise.all([
     admin.from("users").select("email,phone").eq("id", id).single(),
     profile.referred_by
       ? admin.from("users_profile").select("id,name,username_id,referral_code").eq("id", profile.referred_by).single()
       : Promise.resolve({ data: null }),
-    admin.from("users_profile").select("*", { count: "exact", head: true }).eq("referred_by", id)
+    admin.from("users_profile").select("*", { count: "exact", head: true }).eq("referred_by", id),
+    admin
+      .from("orders")
+      .select("id,amount_total,cash_paid,points_redeemed,order_type,payment_status,created_at,course_session_id,product_id,quantity")
+      .eq("user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    admin
+      .from("appointments")
+      .select("id,mentor_id,service_id,start_at,end_at,status,session_mode,price_total,cash_due,created_at")
+      .eq("user_id", id)
+      .order("start_at", { ascending: false })
+      .limit(10),
+    admin.from("course_sessions").select("id,course_id,start_at,venue_name"),
+    admin.from("courses").select("id,title"),
+    admin.from("mentors").select("id,display_name")
   ]);
 
   const address = formatAddress(profile);
+  const sessionMap = new Map((courseSessions ?? []).map((session) => [session.id, session]));
+  const courseMap = new Map((courses ?? []).map((course) => [course.id, course]));
+  const mentorMap = new Map((mentors ?? []).map((mentor) => [mentor.id, mentor]));
+
+  const programOrders = (orders ?? []).filter((order) => order.order_type === "COURSE" || order.course_session_id);
+
+  function getOrderLabel(order: {
+    order_type: string | null;
+    course_session_id: string | null;
+    product_id?: string | null;
+  }) {
+    if (order.order_type === "COURSE" && order.course_session_id) {
+      const session = sessionMap.get(order.course_session_id);
+      const course = session ? courseMap.get(session.course_id) : null;
+      return course?.title ?? t(language, { zh: "课程 / 活动报名", en: "Program reservation" });
+    }
+    if (order.order_type === "product") return t(language, { zh: "产品订单", en: "Product order" });
+    if (order.order_type === "service") return t(language, { zh: "导师会谈", en: "Guidance session" });
+    if (order.order_type === "personal") return t(language, { zh: "个人消费", en: "Personal purchase" });
+    return order.order_type ?? t(language, { zh: "订单", en: "Order" });
+  }
 
   return (
     <div className="space-y-6">
@@ -196,10 +233,80 @@ export default async function AdminMemberDetailPage({ params }: MemberDetailPage
                 <input name="country" defaultValue={profile.country ?? "Malaysia"} className="rounded-2xl border border-black/10 bg-white px-4 py-3" />
               </label>
             </div>
+            <label className="grid gap-2">
+              <span className="text-sm text-black/55">{t(language, { zh: "内部备注", en: "Internal note" })}</span>
+              <textarea
+                name="internal_note"
+                defaultValue={profile.internal_note ?? ""}
+                rows={5}
+                className="rounded-2xl border border-black/10 bg-white px-4 py-3"
+                placeholder={t(language, { zh: "记录联系偏好、跟进重点、特殊安排。", en: "Track follow-up context, preferences, or special handling." })}
+              />
+            </label>
             <button className="mt-2 w-fit rounded-full bg-[#123524] px-5 py-2 text-sm font-semibold text-white">
               {t(language, { zh: "保存资料", en: "Save details" })}
             </button>
           </form>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "最近订单", en: "Recent orders" })}</h2>
+            <p className="text-sm text-black/50">{orders?.length ?? 0}</p>
+          </div>
+          {orders?.length ? (
+            orders.map((order) => (
+              <div key={order.id} className="rounded-2xl border border-black/8 bg-[#fcfbf8] px-4 py-3 text-sm">
+                <p className="font-medium text-[#123524]">{getOrderLabel(order)}</p>
+                <p className="mt-1 text-black/60">RM {Number(order.amount_total ?? 0).toFixed(2)} · {order.payment_status}</p>
+                <p className="mt-1 text-black/45">{new Date(order.created_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-black/60">{t(language, { zh: "还没有订单记录。", en: "No order history yet." })}</p>
+          )}
+        </div>
+
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "课程与活动", en: "Programs" })}</h2>
+            <p className="text-sm text-black/50">{programOrders.length}</p>
+          </div>
+          {programOrders.length ? (
+            programOrders.map((order) => {
+              const session = order.course_session_id ? sessionMap.get(order.course_session_id) : null;
+              const course = session ? courseMap.get(session.course_id) : null;
+              return (
+                <div key={order.id} className="rounded-2xl border border-black/8 bg-[#fcfbf8] px-4 py-3 text-sm">
+                  <p className="font-medium text-[#123524]">{course?.title ?? t(language, { zh: "课程 / 活动报名", en: "Program reservation" })}</p>
+                  <p className="mt-1 text-black/60">{session ? new Date(session.start_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN") : "-"}</p>
+                  <p className="mt-1 text-black/45">{session?.venue_name ?? t(language, { zh: "场地待公布", en: "Venue to be announced" })}</p>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-black/60">{t(language, { zh: "还没有课程或活动报名。", en: "No program reservations yet." })}</p>
+          )}
+        </div>
+
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "导师会谈", en: "Guidance sessions" })}</h2>
+            <p className="text-sm text-black/50">{appointments?.length ?? 0}</p>
+          </div>
+          {appointments?.length ? (
+            appointments.map((appointment) => (
+              <div key={appointment.id} className="rounded-2xl border border-black/8 bg-[#fcfbf8] px-4 py-3 text-sm">
+                <p className="font-medium text-[#123524]">{mentorMap.get(appointment.mentor_id)?.display_name ?? t(language, { zh: "导师", en: "Mentor" })}</p>
+                <p className="mt-1 text-black/60">{new Date(appointment.start_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}</p>
+                <p className="mt-1 text-black/45">{appointment.status} · {appointment.session_mode}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-black/60">{t(language, { zh: "还没有导师预约记录。", en: "No guidance sessions yet." })}</p>
+          )}
         </div>
       </div>
     </div>

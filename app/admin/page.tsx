@@ -53,6 +53,15 @@ export default async function AdminIndex() {
       })
     },
     {
+      href: "/admin/team",
+      eyebrow: t(language, { zh: "后台权限", en: "Admin access" }),
+      title: t(language, { zh: "管理员管理", en: "Admin management" }),
+      description: t(language, {
+        zh: "直接把已注册用户设成 ADMIN 或 STAFF，不再需要进入 SQL 手动维护。",
+        en: "Assign registered users as ADMIN or STAFF without touching SQL."
+      })
+    },
+    {
       href: "/dashboard",
       eyebrow: t(language, { zh: "返回会员空间", en: "Back to dashboard" }),
       title: t(language, { zh: "会员中心", en: "Member dashboard" }),

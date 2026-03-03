@@ -29,6 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Link href="/admin/appointments">{t(language, { zh: "预约", en: "Appointments" })}</Link>
               <Link href="/admin/mentors">{t(language, { zh: "导师", en: "Mentors" })}</Link>
               <Link href="/admin/relationships">{t(language, { zh: "关系", en: "Relationships" })}</Link>
+              <Link href="/admin/team">{t(language, { zh: "管理员", en: "Admins" })}</Link>
               <Link href="/dashboard">{t(language, { zh: "会员中心", en: "Dashboard" })}</Link>
             </nav>
           </div>

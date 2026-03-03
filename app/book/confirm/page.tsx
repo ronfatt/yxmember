@@ -24,7 +24,7 @@ export default async function BookingConfirmPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const resolvedSearchParams = await searchParams;
   const mentorId = getSingle(resolvedSearchParams.mentorId);
   const serviceId = getSingle(resolvedSearchParams.serviceId);
@@ -46,7 +46,7 @@ export default async function BookingConfirmPage({
   const allowRecording = getSingle(resolvedSearchParams.allowRecording) === "1";
   const themes = getMulti(resolvedSearchParams.theme);
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ mentor, service }, { data: profile }] = await Promise.all([
     getMentorService(supabase, mentorId, serviceId),
     supabase.from("users_profile").select("points_balance").eq("id", user.id).single()

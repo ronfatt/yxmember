@@ -3,7 +3,7 @@ import { createClient } from "../supabase/server";
 import { isAdminEmail } from "../metaenergy/auth";
 
 export async function requireUser() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
     redirect("/login");
@@ -12,7 +12,7 @@ export async function requireUser() {
 }
 
 export async function requireAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) {
     redirect("/login");
@@ -35,7 +35,7 @@ export async function requireAdmin() {
 }
 
 export async function getAdminStatus(userId?: string | null, email?: string | null) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (isAdminEmail(email)) {
     return true;

@@ -8,8 +8,8 @@ import { createClient } from "../../../../lib/supabase/server";
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    const language = getCurrentLanguage();
-    const supabase = createClient();
+    const language = await getCurrentLanguage();
+    const supabase = await createClient();
     const payload = await request.json().catch(() => ({}));
 
     const { data: profile } = await supabase
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, report });
   } catch (error) {
-    const language = getCurrentLanguage();
+    const language = await getCurrentLanguage();
     const message = error instanceof Error ? error.message : language === "en" ? "Unable to generate report." : "暂时无法生成报告。";
     return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }

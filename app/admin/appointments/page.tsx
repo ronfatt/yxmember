@@ -11,7 +11,7 @@ export default async function AdminAppointmentsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const resolvedSearchParams = await searchParams;
   const query = admin

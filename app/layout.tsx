@@ -53,8 +53,8 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const language = getCurrentLanguage();
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const language = await getCurrentLanguage();
 
   return (
     <html lang={language === "en" ? "en" : "zh-CN"}>

@@ -32,7 +32,7 @@ async function blockSlot(formData: FormData) {
 }
 
 export default async function AdminRoomsPage() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const { data: rooms } = await admin.from("rooms").select("*").order("created_at", { ascending: false });
   const { data: slots } = await admin.from("room_slots").select("id,start_at,end_at,status").order("start_at", { ascending: true }).limit(20);

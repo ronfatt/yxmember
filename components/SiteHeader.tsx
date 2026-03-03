@@ -5,7 +5,7 @@ import { t } from "../lib/i18n/shared";
 import { getCurrentLanguage } from "../lib/i18n/server";
 
 export default async function SiteHeader() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
 
   return (
     <header className="border-b border-black/5 bg-white/60 backdrop-blur-xl">

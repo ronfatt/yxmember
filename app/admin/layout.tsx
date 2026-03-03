@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireAdmin();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,_#f5f1e8_0%,_#ffffff_100%)]">

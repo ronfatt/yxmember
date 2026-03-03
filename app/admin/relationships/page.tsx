@@ -42,7 +42,7 @@ function buildMemberLabel(language: "zh" | "en", name: string | null, code: stri
 
 export default async function AdminRelationshipsPage({ searchParams }: RelationshipsPageProps) {
   await requireAdmin();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const resolvedSearchParams = (await searchParams) ?? {};
   const query = (resolvedSearchParams.q ?? "").trim().toLowerCase();

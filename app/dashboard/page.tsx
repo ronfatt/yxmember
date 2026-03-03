@@ -39,8 +39,8 @@ function MetricCard({
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const requestHeaders = await headers();
   const monthKey = format(startOfMonth(new Date()), "yyyy-MM-dd");
   const weekKey = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");

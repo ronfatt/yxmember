@@ -10,7 +10,7 @@ function csvCell(value: string | number | null | undefined) {
 }
 
 export async function GET(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });

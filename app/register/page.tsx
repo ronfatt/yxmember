@@ -4,8 +4,8 @@ import RegisterForm from "../../components/RegisterForm";
 import { t } from "../../lib/i18n/shared";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 
-export default function RegisterPage() {
-  const language = getCurrentLanguage();
+export default async function RegisterPage() {
+  const language = await getCurrentLanguage();
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#f6f1e8]">

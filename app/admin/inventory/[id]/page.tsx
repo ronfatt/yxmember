@@ -70,7 +70,7 @@ export default async function AdminInventoryDetailPage({
   params: Promise<{ id: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   await requireAdmin();
   const { id } = await params;

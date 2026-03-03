@@ -126,7 +126,7 @@ async function approveCourseTransfer(formData: FormData) {
 }
 
 export default async function AdminCoursesPage() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const bankAccountName = process.env.BANK_ACCOUNT_NAME?.trim();
   const bankAccountNumber = process.env.BANK_ACCOUNT_NUMBER?.trim();

@@ -45,7 +45,7 @@ async function updateAccount(formData: FormData) {
 }
 
 export default async function AdminAccountsPage() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const accounts = await getActivePaymentAccounts(admin);
   const { data: allAccounts } = await admin

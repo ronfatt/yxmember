@@ -5,7 +5,7 @@ import { getCurrentLanguage } from "../../lib/i18n/server";
 
 export default async function AdminIndex() {
   await requireAdmin();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const items = [
     {
       href: "/admin/accounting",

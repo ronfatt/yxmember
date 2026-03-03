@@ -6,7 +6,7 @@ import { getCurrentLanguage } from "../../../../../lib/i18n/server";
 import { getAdminStatus } from "../../../../../lib/actions/session";
 
 export async function POST(request: Request) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const payload = await request.json().catch(() => null);
   const parsed = appointmentCancelSchema.safeParse(payload);
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: language === "en" ? "Invalid request." : "请求无效。" }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -112,7 +112,7 @@ async function addStockMovement(formData: FormData) {
 }
 
 export default async function AdminProductsPage() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const [{ data: products }, { data: movements }] = await Promise.all([
     admin.from("products").select("*").order("created_at", { ascending: false }),

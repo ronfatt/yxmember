@@ -4,7 +4,7 @@ import { supabaseAdmin } from "../../../lib/supabase/admin";
 import Link from "next/link";
 
 export default async function AdminBookingsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const resolvedSearchParams = await searchParams;
   const bookingsQuery = admin.from("bookings").select("*").order("created_at", { ascending: false });

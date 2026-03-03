@@ -11,7 +11,7 @@ export default async function AdminAccountingReportsPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireAdmin();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const resolvedSearchParams = (await searchParams) ?? {};
   const month = resolveAccountingMonth(typeof resolvedSearchParams.month === "string" ? resolvedSearchParams.month : null);
   const snapshot = await getAccountingSnapshot(supabaseAdmin(), month);

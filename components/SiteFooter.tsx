@@ -1,8 +1,8 @@
 import { t } from "../lib/i18n/shared";
 import { getCurrentLanguage } from "../lib/i18n/server";
 
-export default function SiteFooter() {
-  const language = getCurrentLanguage();
+export default async function SiteFooter() {
+  const language = await getCurrentLanguage();
 
   return (
     <footer className="border-t border-black/10 bg-[#f8f2e8]">

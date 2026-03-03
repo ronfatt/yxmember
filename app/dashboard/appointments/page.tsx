@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardAppointmentsPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
 
   const { data: appointments } = await supabase
     .from("appointments")

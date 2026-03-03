@@ -4,8 +4,8 @@ import LoginForm from "../../components/LoginForm";
 import { t } from "../../lib/i18n/shared";
 import { getCurrentLanguage } from "../../lib/i18n/server";
 
-export default function LoginPage() {
-  const language = getCurrentLanguage();
+export default async function LoginPage() {
+  const language = await getCurrentLanguage();
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#f6f1e8]">

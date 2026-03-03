@@ -6,14 +6,14 @@ import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { renderProgramEmail, sendEmail } from "../../../lib/notifications/email";
 
 export async function POST(request: Request) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const body = await request.json();
   const parsed = enrollmentSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: language === "en" ? "Invalid input." : "请求无效。" }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) {
     return NextResponse.json({ error: language === "en" ? "Please sign in first." : "请先登录会员账号。" }, { status: 401 });

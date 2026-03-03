@@ -23,8 +23,8 @@ function parseReminder(content: string | null) {
 
 export default async function FrequencyPrintPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
 
   const [{ data: profile }, { data: report }, { data: reminder }] = await Promise.all([
     supabase.from("users_profile").select("name,birthday,referral_code").eq("id", user.id).single(),

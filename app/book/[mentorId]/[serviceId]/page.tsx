@@ -15,8 +15,8 @@ export default async function AppointmentSlotPage({
   params: Promise<{ mentorId: string; serviceId: string }>;
 }) {
   await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const resolvedParams = await params;
   const { mentor, service } = await getMentorService(supabase, resolvedParams.mentorId, resolvedParams.serviceId);
   const slots = await getBookableSlots(supabase, resolvedParams.mentorId, service.duration_min, new Date(), 14);

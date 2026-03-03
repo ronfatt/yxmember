@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const { id } = await request.json();
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

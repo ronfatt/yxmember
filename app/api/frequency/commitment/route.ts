@@ -5,10 +5,10 @@ import { getCurrentLanguage } from "../../../../lib/i18n/server";
 import { createClient } from "../../../../lib/supabase/server";
 
 export async function POST(request: Request) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   try {
     const user = await requireUser();
-    const supabase = createClient();
+    const supabase = await createClient();
     const payload = await request.json().catch(() => ({}));
     const commitmentText = String(payload.commitmentText ?? "").trim();
 

@@ -7,8 +7,8 @@ import Link from "next/link";
 import { formatMoney } from "../../../lib/metaenergy/helpers";
 
 export default async function MentorDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const resolvedParams = await params;
   const [{ data: mentor }, { data: services }] = await Promise.all([
     supabase.from("mentors").select("*").eq("id", resolvedParams.id).single(),

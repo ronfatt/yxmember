@@ -31,7 +31,7 @@ async function reverseOrderAction(formData: FormData) {
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireAdmin();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const resolvedSearchParams = (await searchParams) ?? {};
   const sourceFilter = resolvedSearchParams.source === "referred" || resolvedSearchParams.source === "personal" ? resolvedSearchParams.source : "all";

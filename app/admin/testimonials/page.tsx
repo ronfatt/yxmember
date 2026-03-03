@@ -13,7 +13,7 @@ async function updateStatus(formData: FormData) {
 }
 
 export default async function AdminTestimonialsPage() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const { data: testimonials } = await admin.from("testimonials").select("*").order("created_at", { ascending: false });
 

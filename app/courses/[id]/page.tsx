@@ -6,8 +6,8 @@ import { createClient } from "../../../lib/supabase/server";
 import CourseSessions from "../../../components/CourseSessions";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const resolvedParams = await params;
   const { data: course } = await supabase.from("courses").select("*").eq("id", resolvedParams.id).single();
   const { data: sessions } = await supabase

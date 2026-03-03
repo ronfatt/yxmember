@@ -6,7 +6,7 @@ import { buildAppointmentQuote, ensureAppointmentSlotAvailable, getMentorService
 import { getCurrentLanguage } from "../../../../lib/i18n/server";
 
 export async function POST(request: Request) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const payload = await request.json().catch(() => null);
   const parsed = appointmentCreateSchema.safeParse(payload);
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

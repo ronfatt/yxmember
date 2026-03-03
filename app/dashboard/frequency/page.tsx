@@ -29,8 +29,8 @@ function parseReminder(content: string, language: "zh" | "en", report?: Frequenc
 
 export default async function FrequencyDashboardPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const weekKey = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
 
   const [{ data: profile }, { data: reports }, { data: reminders }, { data: commitment }, { data: journal }] = await Promise.all([

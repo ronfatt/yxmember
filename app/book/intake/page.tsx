@@ -18,7 +18,7 @@ export default async function BookingIntakePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireUser();
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const resolvedSearchParams = await searchParams;
   const mentorId = getSingle(resolvedSearchParams.mentorId);
   const serviceId = getSingle(resolvedSearchParams.serviceId);
@@ -34,7 +34,7 @@ export default async function BookingIntakePage({
     redirect(`/book/${mentorId}/${serviceId}`);
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { mentor, service } = await getMentorService(supabase, mentorId, serviceId);
 
   return (

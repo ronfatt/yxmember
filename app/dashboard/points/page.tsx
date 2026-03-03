@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 export default async function PointsDashboardPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
 
   const [{ data: profile }, { data: ledger }] = await Promise.all([
     supabase.from("users_profile").select("points_balance").eq("id", user.id).single(),

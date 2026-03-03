@@ -70,7 +70,7 @@ export default async function AdminInventoryPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const resolvedSearchParams = (await searchParams) ?? {};
   const query = typeof resolvedSearchParams.q === "string" ? resolvedSearchParams.q.trim() : "";

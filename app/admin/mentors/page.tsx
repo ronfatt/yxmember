@@ -49,7 +49,7 @@ async function createAvailabilityRule(formData: FormData) {
 }
 
 export default async function AdminMentorsPage() {
-  const language = getCurrentLanguage();
+  const language = await getCurrentLanguage();
   const admin = supabaseAdmin();
   const [{ data: mentors }, { data: services }, { data: rules }] = await Promise.all([
     admin.from("mentors").select("*").order("sort_order", { ascending: true }),

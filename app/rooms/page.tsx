@@ -14,8 +14,8 @@ export const metadata: Metadata = createPublicMetadata(
 );
 
 export default async function RoomsPage() {
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const { data: slots } = await supabase
     .from("room_slots_view")
     .select("id,start_at,end_at,room_name,remaining_capacity,total_capacity,status")

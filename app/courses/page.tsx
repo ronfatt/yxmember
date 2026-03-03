@@ -14,8 +14,8 @@ export const metadata: Metadata = createPublicMetadata(
 );
 
 export default async function CoursesPage() {
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const { data: courses } = await supabase
     .from("courses")
     .select("id,title,tagline,level,is_published")

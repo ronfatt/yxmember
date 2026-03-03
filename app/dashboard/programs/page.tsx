@@ -19,8 +19,8 @@ function formatDate(value: string, language: "zh" | "en") {
 
 export default async function DashboardProgramsPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
 
   const [{ data: courses }, { data: sessions }, { data: orders }, activeAccounts] = await Promise.all([
     supabase

@@ -17,8 +17,8 @@ export const metadata: Metadata = createPublicMetadata(
   "/"
 );
 
-export default function HomePage() {
-  const language = getCurrentLanguage();
+export default async function HomePage() {
+  const language = await getCurrentLanguage();
   const siteUrl = getSiteUrl().toString();
   const valueCards = [
     {

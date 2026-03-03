@@ -14,8 +14,8 @@ export const metadata: Metadata = createPublicMetadata(
 );
 
 export default async function ProductsPage() {
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
   const { data: products } = await supabase
     .from("products")
     .select("id,title,subtitle,description,benefits,is_published,price_myr,stock_on_hand,track_inventory,allow_backorder")

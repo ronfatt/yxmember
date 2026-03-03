@@ -20,8 +20,8 @@ type OrderRow = {
 
 export default async function DashboardHistoryPage() {
   const user = await requireUser();
-  const language = getCurrentLanguage();
-  const supabase = createClient();
+  const language = await getCurrentLanguage();
+  const supabase = await createClient();
 
   const [{ data: orders }, { data: ledger }, { data: sessions }, { data: courses }] = await Promise.all([
     supabase

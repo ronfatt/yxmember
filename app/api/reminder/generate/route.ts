@@ -8,8 +8,8 @@ import { createClient } from "../../../../lib/supabase/server";
 export async function POST() {
   try {
     const user = await requireUser();
-    const language = getCurrentLanguage();
-    const supabase = createClient();
+    const language = await getCurrentLanguage();
+    const supabase = await createClient();
 
     const { data: latestReport, error: reportError } = await supabase
       .from("frequency_reports")
@@ -64,7 +64,7 @@ export async function POST() {
 
     return NextResponse.json({ ok: true, reminder });
   } catch (error) {
-    const language = getCurrentLanguage();
+    const language = await getCurrentLanguage();
     const message = error instanceof Error ? error.message : language === "en" ? "Unable to generate reminder." : "暂时无法生成提醒。";
     return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }

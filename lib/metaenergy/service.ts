@@ -128,6 +128,157 @@ async function recalculateReferrerMetrics(admin: SupabaseClient, referrerId: str
   if (profileUpdateError) throw profileUpdateError;
 }
 
+async function applyPaidOrderEffects(
+  admin: SupabaseClient,
+  input: {
+    orderId: string;
+    userId: string;
+    amountTotal: number;
+    cashPaid: number;
+    pointsRedeemed: number;
+    orderType: "personal" | "service" | "product";
+    productId?: string | null;
+    quantity?: number;
+    createdAt: string;
+  }
+) {
+  const { data: buyerProfile, error: buyerError } = await admin
+    .from("users_profile")
+    .select("id, points_balance, referred_by")
+    .eq("id", input.userId)
+    .single();
+
+  if (buyerError || !buyerProfile) {
+    throw buyerError ?? new Error("Buyer profile not found.");
+  }
+
+  const safePoints = calcMaxRedeemablePoints(input.amountTotal, buyerProfile.points_balance);
+  const pointsRedeemed = Math.min(Math.max(0, Math.floor(Number(input.pointsRedeemed ?? 0))), safePoints);
+  const cashPaid = input.cashPaid > 0 ? Number(input.cashPaid) : calcCashPaid(input.amountTotal, pointsRedeemed);
+  const earnedPoints = calcEarnedPoints(cashPaid);
+
+  const { error: orderSyncError } = await admin
+    .from("orders")
+    .update({
+      cash_paid: cashPaid,
+      points_redeemed: pointsRedeemed,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.orderId);
+
+  if (orderSyncError) throw orderSyncError;
+
+  if (pointsRedeemed > 0) {
+    const { error: redeemLedgerError } = await admin.from("points_ledger").insert({
+      user_id: input.userId,
+      points: -pointsRedeemed,
+      action: "redeem",
+      order_id: input.orderId,
+      note: "Redeemed during checkout"
+    });
+
+    if (redeemLedgerError) throw redeemLedgerError;
+  }
+
+  if (earnedPoints > 0) {
+    const { error: earnLedgerError } = await admin.from("points_ledger").insert({
+      user_id: input.userId,
+      points: earnedPoints,
+      action: "earn",
+      order_id: input.orderId,
+      note: "Earned from cash paid"
+    });
+
+    if (earnLedgerError) throw earnLedgerError;
+  }
+
+  const { error: pointsError } = await admin
+    .from("users_profile")
+    .update({
+      points_balance: buyerProfile.points_balance - pointsRedeemed + earnedPoints
+    })
+    .eq("id", input.userId);
+
+  if (pointsError) throw pointsError;
+
+  if (input.orderType === "product" && input.productId) {
+    const { data: product, error: productError } = await admin
+      .from("products")
+      .select("id,title,stock_on_hand,track_inventory,allow_backorder")
+      .eq("id", input.productId)
+      .single();
+
+    if (productError || !product) {
+      throw productError ?? new Error("Product not found.");
+    }
+
+    const quantity = Math.max(1, Math.trunc(Number(input.quantity ?? 1)));
+
+    if (product.track_inventory && !product.allow_backorder && Number(product.stock_on_hand ?? 0) < quantity) {
+      throw new Error("Not enough stock for this product order.");
+    }
+
+    if (product.track_inventory) {
+      const nextStock = Math.max(0, Number(product.stock_on_hand ?? 0) - quantity);
+      const { error: stockUpdateError } = await admin
+        .from("products")
+        .update({
+          stock_on_hand: nextStock,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", product.id);
+
+      if (stockUpdateError) throw stockUpdateError;
+
+      const { error: movementError } = await admin.from("stock_movements").insert({
+        product_id: product.id,
+        order_id: input.orderId,
+        movement_type: "out",
+        quantity,
+        note: `Order ${input.orderId}: sold to member`,
+        created_by: input.userId
+      });
+
+      if (movementError) throw movementError;
+    }
+  }
+
+  await updateMonthlyStats(admin, input.userId, input.createdAt);
+
+  if (buyerProfile.referred_by) {
+    const { data: referrerProfile, error: referrerError } = await admin
+      .from("users_profile")
+      .select("id, tier_rate")
+      .eq("id", buyerProfile.referred_by)
+      .single();
+
+    if (referrerError || !referrerProfile) {
+      throw referrerError ?? new Error("Referrer profile not found.");
+    }
+
+    const currentRate = Number(referrerProfile.tier_rate ?? 0);
+    const commissionAmount = calcCommissionForOrder(currentRate, cashPaid);
+
+    const { error: referralOrderError } = await admin.from("referral_orders").insert({
+      order_id: input.orderId,
+      referrer_id: buyerProfile.referred_by,
+      referred_user_id: input.userId,
+      commission_rate: currentRate,
+      commission_amount: commissionAmount
+    });
+
+    if (referralOrderError) throw referralOrderError;
+
+    await recalculateReferrerMetrics(admin, buyerProfile.referred_by);
+  }
+
+  return {
+    pointsRedeemed,
+    earnedPoints,
+    cashPaid
+  };
+}
+
 export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderInput) {
   const amountTotal = Number(input.amountTotal);
   const requestedPoints = Math.max(0, Math.floor(Number(input.pointsRedeemed ?? 0)));
@@ -211,91 +362,17 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
     throw orderError ?? new Error("Unable to create order.");
   }
 
-  if (pointsRedeemed > 0) {
-    const { error: redeemLedgerError } = await admin.from("points_ledger").insert({
-      user_id: input.userId,
-      points: -pointsRedeemed,
-      action: "redeem",
-      order_id: order.id,
-      note: "Redeemed during checkout"
-    });
-
-    if (redeemLedgerError) throw redeemLedgerError;
-  }
-
-  if (earnedPoints > 0) {
-    const { error: earnLedgerError } = await admin.from("points_ledger").insert({
-      user_id: input.userId,
-      points: earnedPoints,
-      action: "earn",
-      order_id: order.id,
-      note: "Earned from cash paid"
-    });
-
-    if (earnLedgerError) throw earnLedgerError;
-  }
-
-  const { error: pointsError } = await admin
-    .from("users_profile")
-    .update({
-      points_balance: buyerProfile.points_balance - pointsRedeemed + earnedPoints
-    })
-    .eq("id", input.userId);
-
-  if (pointsError) throw pointsError;
-
-  if (product?.track_inventory) {
-    const nextStock = Math.max(0, Number(product.stock_on_hand ?? 0) - quantity);
-    const { error: stockUpdateError } = await admin
-      .from("products")
-      .update({
-        stock_on_hand: nextStock,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", product.id);
-
-    if (stockUpdateError) throw stockUpdateError;
-
-    const { error: movementError } = await admin.from("stock_movements").insert({
-      product_id: product.id,
-      order_id: order.id,
-      movement_type: "out",
-      quantity,
-      note: `Order ${order.id}: sold to member`,
-      created_by: input.userId
-    });
-
-    if (movementError) throw movementError;
-  }
-
-  await updateMonthlyStats(admin, input.userId, order.created_at);
-
-  if (effectiveReferrerId) {
-    const { data: referrerProfile, error: referrerError } = await admin
-      .from("users_profile")
-      .select("id, tier_rate, total_referred_sales, total_commission_earned")
-      .eq("id", effectiveReferrerId)
-      .single();
-
-    if (referrerError || !referrerProfile) {
-      throw referrerError ?? new Error("Referrer profile not found.");
-    }
-
-    const currentRate = Number(referrerProfile.tier_rate ?? 0);
-    const commissionAmount = calcCommissionForOrder(currentRate, cashPaid);
-
-    const { error: referralOrderError } = await admin.from("referral_orders").insert({
-      order_id: order.id,
-      referrer_id: effectiveReferrerId,
-      referred_user_id: input.userId,
-      commission_rate: currentRate,
-      commission_amount: commissionAmount
-    });
-
-    if (referralOrderError) throw referralOrderError;
-
-    await recalculateReferrerMetrics(admin, effectiveReferrerId);
-  }
+  await applyPaidOrderEffects(admin, {
+    orderId: order.id,
+    userId: input.userId,
+    amountTotal,
+    cashPaid,
+    pointsRedeemed,
+    orderType: input.orderType,
+    productId: product?.id ?? null,
+    quantity,
+    createdAt: order.created_at
+  });
 
   return {
     orderId: order.id,
@@ -305,6 +382,60 @@ export async function createMetaOrder(admin: SupabaseClient, input: CreateOrderI
     earnedPoints,
     currentMonth: currentMonthKey(new Date(order.created_at))
   };
+}
+
+export async function approvePendingProductOrder(admin: SupabaseClient, orderId: string, reviewerId?: string | null) {
+  const { data: order, error: orderError } = await admin
+    .from("orders")
+    .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,payment_status,product_id,quantity,created_at")
+    .eq("id", orderId)
+    .single();
+
+  if (orderError || !order) {
+    throw orderError ?? new Error("Order not found.");
+  }
+
+  if (order.order_type !== "product") {
+    throw new Error("This is not a product order.");
+  }
+
+  if (order.payment_status === "PAID") {
+    throw new Error("This product order is already marked as paid.");
+  }
+
+  if (order.payment_status === "REFUNDED") {
+    throw new Error("Refunded product orders cannot be approved.");
+  }
+
+  const cashPaid = calcCashPaid(Number(order.amount_total ?? 0), Number(order.points_redeemed ?? 0));
+
+  const { error: updateError } = await admin
+    .from("orders")
+    .update({
+      cash_paid: cashPaid,
+      payment_status: "PAID",
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: reviewerId ?? null
+    })
+    .eq("id", orderId);
+
+  if (updateError) throw updateError;
+
+  await applyPaidOrderEffects(admin, {
+    orderId: order.id,
+    userId: order.user_id,
+    amountTotal: Number(order.amount_total ?? 0),
+    cashPaid,
+    pointsRedeemed: Number(order.points_redeemed ?? 0),
+    orderType: "product",
+    productId: order.product_id,
+    quantity: Number(order.quantity ?? 1),
+    createdAt: order.created_at
+  });
+
+  return { orderId: order.id, cashPaid };
 }
 
 export async function runKeepAlive(admin: SupabaseClient, referenceDate = new Date()) {

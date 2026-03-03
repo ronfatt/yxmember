@@ -160,6 +160,26 @@ export default async function DashboardPage() {
         </div>
         <div className="card flex flex-col justify-between gap-4">
           <div className="space-y-2">
+            <p className="text-sm text-black/55">{t(language, { zh: "产品专区", en: "Products" })}</p>
+            <p className="font-display text-3xl text-[#123524]">{t(language, { zh: "购买与预订", en: "Buy or preorder" })}</p>
+            <p className="text-sm text-black/65">
+              {t(language, {
+                zh: "查看可购买产品、建立产品订单，并上传银行转账单据完成购买。",
+                en: "Browse products, create purchase orders, and finish payment by bank transfer."
+              })}
+            </p>
+          </div>
+          <div>
+            <Link
+              href="/dashboard/products"
+              className="inline-flex rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524] shadow-[0_16px_28px_rgba(200,165,92,0.2)]"
+            >
+              {t(language, { zh: "进入产品区", en: "View products" })}
+            </Link>
+          </div>
+        </div>
+        <div className="card flex flex-col justify-between gap-4">
+          <div className="space-y-2">
             <p className="text-sm text-black/55">{t(language, { zh: "导师会谈", en: "Guidance sessions" })}</p>
             <p className="font-display text-3xl text-[#123524]">{t(language, { zh: "预约导师", en: "Book a mentor" })}</p>
             <p className="text-sm text-black/65">

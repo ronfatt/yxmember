@@ -63,3 +63,9 @@ export const appointmentCancelSchema = appointmentAdminActionSchema.extend({
 export const enrollmentSchema = z.object({
   course_session_id: z.string().uuid()
 });
+
+export const productOrderSchema = z.object({
+  product_id: z.string().uuid(),
+  quantity: z.number().int().min(1).max(99),
+  points_requested: z.number().int().min(0).default(0)
+});

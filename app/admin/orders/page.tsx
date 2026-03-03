@@ -4,7 +4,7 @@ import { requireAdmin } from "../../../lib/actions/session";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
 import { formatMoney, formatPercent } from "../../../lib/metaenergy/helpers";
-import { reverseMetaOrder } from "../../../lib/metaenergy/service";
+import { approvePendingProductOrder, reverseMetaOrder } from "../../../lib/metaenergy/service";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 type AdminOrdersPageProps = {
@@ -29,6 +29,19 @@ async function reverseOrderAction(formData: FormData) {
   revalidatePath("/dashboard/history");
 }
 
+async function approveProductTransferAction(formData: FormData) {
+  "use server";
+  const adminUser = await requireAdmin();
+  const orderId = String(formData.get("order_id"));
+  await approvePendingProductOrder(supabaseAdmin(), orderId, adminUser.id);
+  revalidatePath("/admin/orders");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/points");
+  revalidatePath("/dashboard/referrals");
+  revalidatePath("/dashboard/history");
+  revalidatePath("/dashboard/products");
+}
+
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireAdmin();
   const language = await getCurrentLanguage();
@@ -37,14 +50,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const sourceFilter = resolvedSearchParams.source === "referred" || resolvedSearchParams.source === "personal" ? resolvedSearchParams.source : "all";
   const buyerFilter = resolvedSearchParams.buyer ?? "";
   const referrerFilter = resolvedSearchParams.referrer ?? "";
-  const statusFilter = ["all", "PAID", "REFUNDED"].includes(resolvedSearchParams.status ?? "") ? resolvedSearchParams.status ?? "all" : "all";
+  const statusFilter = ["all", "PENDING", "PAID", "REFUNDED"].includes(resolvedSearchParams.status ?? "") ? resolvedSearchParams.status ?? "all" : "all";
   const limit = Math.min(Math.max(Number(resolvedSearchParams.limit ?? "20"), 5), 100);
 
   const [{ data: users }, { data: allOrders }, { data: referralOrders }, { data: products }] = await Promise.all([
     admin.from("users_profile").select("id,name,referral_code,referred_by").order("created_at", { ascending: false }),
     admin
       .from("orders")
-      .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at,payment_status,product_id,quantity")
+      .select("id,user_id,amount_total,cash_paid,points_redeemed,order_type,created_at,payment_status,product_id,quantity,slip_url")
       .order("created_at", { ascending: false })
       .limit(limit),
     admin
@@ -110,6 +123,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     return buyerMatches && referrerMatches;
   });
 
+  const pendingProductOrders = orders.filter((order) => order.order_type === "product" && order.payment_status === "PENDING");
+
   return (
     <div className="space-y-6">
       <div className="card space-y-4">
@@ -152,6 +167,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             <select name="status" defaultValue={statusFilter} className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3">
               <option value="all">{language === "en" ? "all" : "全部"}</option>
               <option value="PAID">{language === "en" ? "paid" : "已支付"}</option>
+              <option value="PENDING">{language === "en" ? "pending" : "待审核"}</option>
               <option value="REFUNDED">{language === "en" ? "refunded" : "已退款"}</option>
             </select>
           </label>
@@ -167,6 +183,46 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "待审核产品汇款", en: "Pending product transfers" })}</h2>
+            <p className="text-sm text-black/55">{pendingProductOrders.length} {t(language, { zh: "条", en: "shown" })}</p>
+          </div>
+          {pendingProductOrders.length ? (
+            pendingProductOrders.map((order) => (
+              <div key={order.id} className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-[#123524]">
+                      {productMap.get(order.product_id ?? "")?.title ?? t(language, { zh: "产品订单", en: "Product order" })} · {t(language, { zh: "数量", en: "Qty" })} {order.quantity ?? 1}
+                    </p>
+                    <p className="text-black/55">
+                      {userMap.get(order.user_id)?.name ?? t(language, { zh: "未知会员", en: "Unknown member" })} ({userMap.get(order.user_id)?.referralCode ?? order.user_id})
+                    </p>
+                  </div>
+                  <p className="text-[#123524]">{formatMoney(Number(order.amount_total))}</p>
+                </div>
+                <p className="mt-1 text-black/60">{t(language, { zh: "现金：", en: "Cash: " })}{formatMoney(Number(order.cash_paid))} | {t(language, { zh: "积分：", en: "Points: " })}{order.points_redeemed}</p>
+                {order.slip_url ? (
+                  <a href={order.slip_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-black/60 underline underline-offset-4">
+                    {t(language, { zh: "查看单据", en: "View slip" })}
+                  </a>
+                ) : null}
+                <p className="mt-1 text-black/45">{new Date(order.created_at).toLocaleString(language === "en" ? "en-MY" : "zh-CN")}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <form action={approveProductTransferAction}>
+                    <input type="hidden" name="order_id" value={order.id} />
+                    <button className="rounded-full bg-[#123524] px-4 py-2 text-xs font-semibold text-white">
+                      {t(language, { zh: "确认已汇款", en: "Mark paid" })}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-black/60">{t(language, { zh: "目前没有待审核的产品汇款订单。", en: "There are no pending product transfer orders right now." })}</p>
+          )}
+        </div>
         <div className="card space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "最近订单", en: "Recent orders" })}</h2>

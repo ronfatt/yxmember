@@ -1,5 +1,6 @@
 import SiteHeader from "../../../components/SiteHeader";
 import SiteFooter from "../../../components/SiteFooter";
+import Link from "next/link";
 import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
 import { createClient } from "../../../lib/supabase/server";
@@ -69,6 +70,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 <li key={benefit}>{benefit}</li>
               ))}
             </ul>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/dashboard/products"
+              className="inline-flex rounded-full bg-[linear-gradient(135deg,#c8a55c,#e6c88f)] px-4 py-2 text-sm font-semibold text-[#123524]"
+            >
+              {t(language, {
+                zh: product.allow_backorder && Number(product.stock_on_hand ?? 0) <= 0 ? "登录后预订产品" : "登录后购买产品",
+                en: product.allow_backorder && Number(product.stock_on_hand ?? 0) <= 0 ? "Sign in to preorder" : "Sign in to purchase"
+              })}
+            </Link>
           </div>
         </div>
       </main>

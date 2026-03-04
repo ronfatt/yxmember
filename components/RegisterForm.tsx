@@ -77,6 +77,9 @@ export default function RegisterForm({ language }: { language: Language }) {
       if (usernameHint && (usernameHint.includes("已被使用") || usernameHint.includes("already taken"))) {
         throw new Error(usernameHint);
       }
+      if (password.length < 6) {
+        throw new Error(language === "en" ? "Password must be at least 6 characters." : "密码至少需要 6 个字符。");
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -204,11 +207,15 @@ export default function RegisterForm({ language }: { language: Language }) {
             <input
               className="w-full bg-transparent px-5 py-4 text-[#0f2f24] outline-none"
               type="password"
+              minLength={6}
               placeholder={language === "en" ? "Create your password" : "设置你的登录密码"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
           </div>
+          <p className="mt-2 text-xs leading-6 text-black/50">
+            {language === "en" ? "Use at least 6 characters." : "请使用至少 6 个字符。"}
+          </p>
         </label>
 
         <button

@@ -75,3 +75,35 @@ export function renderProgramEmail({
     </div>
   `;
 }
+
+export function renderProductEmail({
+  heading,
+  intro,
+  lines
+}: {
+  heading: string;
+  intro: string;
+  lines: string[];
+}) {
+  const details = lines.map((line) => `<li style="margin: 0 0 8px;">${line}</li>`).join("");
+
+  return `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; background: #f6f1e8; padding: 32px; color: #123524;">
+      <div style="max-width: 640px; margin: 0 auto; background: white; border-radius: 24px; padding: 32px; border: 1px solid rgba(18,53,36,0.08);">
+        <p style="margin: 0 0 12px; font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(18,53,36,0.6);">
+          元象能量会员系统
+        </p>
+        <h1 style="margin: 0 0 16px; font-size: 28px; line-height: 1.2;">${heading}</h1>
+        <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.8; color: rgba(18,53,36,0.8);">
+          ${intro}
+        </p>
+        <ul style="padding-left: 18px; margin: 0 0 24px; font-size: 14px; line-height: 1.7; color: rgba(18,53,36,0.78);">
+          ${details}
+        </ul>
+        <p style="margin: 0; font-size: 13px; line-height: 1.7; color: rgba(18,53,36,0.62);">
+          为长期而设计的能量与回馈空间。
+        </p>
+      </div>
+    </div>
+  `;
+}

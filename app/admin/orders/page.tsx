@@ -5,6 +5,7 @@ import { getCurrentLanguage } from "../../../lib/i18n/server";
 import { t } from "../../../lib/i18n/shared";
 import { formatMoney, formatPercent } from "../../../lib/metaenergy/helpers";
 import { approvePendingProductOrder, reverseMetaOrder } from "../../../lib/metaenergy/service";
+import { renderProductEmail, sendEmail } from "../../../lib/notifications/email";
 import { supabaseAdmin } from "../../../lib/supabase/admin";
 
 type AdminOrdersPageProps = {
@@ -32,8 +33,43 @@ async function reverseOrderAction(formData: FormData) {
 async function approveProductTransferAction(formData: FormData) {
   "use server";
   const adminUser = await requireAdmin();
+  const language = await getCurrentLanguage();
+  const admin = supabaseAdmin();
   const orderId = String(formData.get("order_id"));
-  await approvePendingProductOrder(supabaseAdmin(), orderId, adminUser.id);
+  await approvePendingProductOrder(admin, orderId, adminUser.id);
+
+  const { data: order } = await admin
+    .from("orders")
+    .select("id,user_id,amount_total,currency,product_id,quantity")
+    .eq("id", orderId)
+    .single();
+
+  if (order) {
+    const [{ data: member }, { data: product }] = await Promise.all([
+      admin.from("users").select("email").eq("id", order.user_id).maybeSingle(),
+      order.product_id ? admin.from("products").select("title").eq("id", order.product_id).maybeSingle() : Promise.resolve({ data: null })
+    ]);
+
+    if (member?.email) {
+      await sendEmail({
+        to: member.email,
+        subject: language === "en" ? "Your MetaEnergy product order is confirmed" : "你的元象产品订单已确认",
+        html: renderProductEmail({
+          heading: language === "en" ? "Your product order is confirmed" : "你的产品订单已确认",
+          intro:
+            language === "en"
+              ? "We have confirmed your bank transfer. Your product order is now locked in."
+              : "我们已经确认收到你的银行转账，这笔产品订单已经正式成立。",
+          lines: [
+            `${language === "en" ? "Product" : "产品"}：${product?.title ?? "-"}`,
+            `${language === "en" ? "Quantity" : "数量"}：${order.quantity ?? 1}`,
+            `${language === "en" ? "Confirmed amount" : "确认金额"}：${Number(order.amount_total ?? 0).toFixed(2)} ${order.currency}`
+          ]
+        })
+      }).catch(() => null);
+    }
+  }
+
   revalidatePath("/admin/orders");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/points");
@@ -53,7 +89,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const statusFilter = ["all", "PENDING", "PAID", "REFUNDED"].includes(resolvedSearchParams.status ?? "") ? resolvedSearchParams.status ?? "all" : "all";
   const limit = Math.min(Math.max(Number(resolvedSearchParams.limit ?? "20"), 5), 100);
 
-  const [{ data: users }, { data: allOrders }, { data: referralOrders }, { data: products }] = await Promise.all([
+  const [{ data: users }, { data: allOrders }, { data: referralOrders }, { data: products }, { data: pendingProgramOrders }] = await Promise.all([
     admin.from("users_profile").select("id,name,referral_code,referred_by").order("created_at", { ascending: false }),
     admin
       .from("orders")
@@ -68,7 +104,12 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     admin
       .from("products")
       .select("id,title,price_myr,stock_on_hand,track_inventory,allow_backorder")
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false }),
+    admin
+      .from("orders")
+      .select("id")
+      .eq("order_type", "COURSE")
+      .eq("payment_status", "PENDING")
   ]);
 
   const userMap = new Map(
@@ -183,6 +224,22 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card space-y-4 lg:col-span-2">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl border border-black/8 bg-[#fcfbf8] p-5">
+              <p className="text-sm text-black/55">{t(language, { zh: "课程待审核", en: "Pending program transfers" })}</p>
+              <p className="mt-2 font-display text-3xl text-[#123524]">{pendingProgramOrders?.length ?? 0}</p>
+              <a href="/admin/courses" className="mt-3 inline-flex text-sm font-semibold text-[#123524] underline underline-offset-4">
+                {t(language, { zh: "前往课程审核", en: "Open program review" })}
+              </a>
+            </div>
+            <div className="rounded-3xl border border-black/8 bg-[#fcfbf8] p-5">
+              <p className="text-sm text-black/55">{t(language, { zh: "产品待审核", en: "Pending product transfers" })}</p>
+              <p className="mt-2 font-display text-3xl text-[#123524]">{pendingProductOrders.length}</p>
+              <p className="mt-3 text-sm text-black/55">{t(language, { zh: "产品汇款可直接在本页确认。", en: "Product transfers can be confirmed directly on this page." })}</p>
+            </div>
+          </div>
+        </div>
         <div className="card space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-3xl text-[#123524]">{t(language, { zh: "待审核产品汇款", en: "Pending product transfers" })}</h2>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import type { Language } from "../lib/i18n/shared";
+import { calcCashPaid, calcMaxRedeemablePoints, pointsToRinggit } from "../lib/metaenergy/calculations";
 
 type Product = {
   id: string;
@@ -17,15 +18,22 @@ type Product = {
 
 export default function ProductOrderCard({
   product,
-  language
+  language,
+  pointsBalance
 }: {
   product: Product;
   language: Language;
+  pointsBalance: number;
 }) {
   const [quantity, setQuantity] = useState(1);
+  const [pointsRequested, setPointsRequested] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const isUnavailable = Boolean(product.track_inventory && !product.allow_backorder && Number(product.stock_on_hand ?? 0) <= 0);
+  const amountTotal = Number(product.price_myr ?? 0) * quantity;
+  const maxRedeemable = calcMaxRedeemablePoints(amountTotal, pointsBalance);
+  const appliedPoints = Math.min(pointsRequested, maxRedeemable);
+  const cashRequired = calcCashPaid(amountTotal, appliedPoints);
 
   const createOrder = async () => {
     if (loading || isUnavailable) return;
@@ -36,7 +44,8 @@ export default function ProductOrderCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           product_id: product.id,
-          quantity
+          quantity,
+          points_requested: appliedPoints
         })
       });
 
@@ -97,6 +106,17 @@ export default function ProductOrderCard({
             className="w-24 rounded-xl border border-black/10 bg-white px-3 py-2"
           />
         </label>
+        <label className="flex items-center gap-2 text-sm text-black/65">
+          <span>{language === "en" ? "Points" : "积分"}</span>
+          <input
+            type="number"
+            min="0"
+            max={maxRedeemable}
+            value={appliedPoints}
+            onChange={(event) => setPointsRequested(Math.max(0, Number(event.target.value) || 0))}
+            className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2"
+          />
+        </label>
         <button
           type="button"
           disabled={loading || isUnavailable}
@@ -109,6 +129,27 @@ export default function ProductOrderCard({
               ? language === "en" ? "Preorder now" : "立即预订"
               : language === "en" ? "Create purchase order" : "建立购买订单"}
         </button>
+      </div>
+      <div className="mt-4 rounded-2xl bg-[#f8f4ea] px-4 py-3 text-sm text-black/65">
+        <p>
+          {language === "en" ? "Estimated total: " : "订单总额："}
+          <span className="font-medium text-[#123524]">{amountTotal.toFixed(2)} MYR</span>
+        </p>
+        <p className="mt-1">
+          {language === "en" ? "Points offset: " : "积分抵扣："}
+          <span className="font-medium text-[#123524]">{appliedPoints} {language === "en" ? "pts" : "积分"}</span>
+          {" · "}
+          {pointsToRinggit(appliedPoints).toFixed(2)} MYR
+        </p>
+        <p className="mt-1">
+          {language === "en" ? "Cash required: " : "需现金支付："}
+          <span className="font-medium text-[#123524]">{cashRequired.toFixed(2)} MYR</span>
+        </p>
+        <p className="mt-1 text-xs text-black/50">
+          {language === "en"
+            ? `You can use up to ${maxRedeemable} pts on this order.`
+            : `这笔订单最多可使用 ${maxRedeemable} 积分。`}
+        </p>
       </div>
     </div>
   );

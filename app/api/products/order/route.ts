@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../../../lib/supabase/admin";
 import { getCurrentLanguage } from "../../../../lib/i18n/server";
 import { productOrderSchema } from "../../../../lib/zod";
 import { calcCashPaid, calcMaxRedeemablePoints } from "../../../../lib/metaenergy/calculations";
+import { renderProductEmail, sendEmail } from "../../../../lib/notifications/email";
 
 export async function POST(request: Request) {
   const language = await getCurrentLanguage();
@@ -74,6 +75,25 @@ export async function POST(request: Request) {
 
   if (orderError || !order) {
     return NextResponse.json({ error: orderError?.message ?? (language === "en" ? "Unable to create order." : "无法创建产品订单。") }, { status: 400 });
+  }
+
+  if (auth.user.email) {
+    await sendEmail({
+      to: auth.user.email,
+      subject: language === "en" ? "Upload your transfer slip to complete your product order" : "请上传汇款单据以完成产品订单",
+      html: renderProductEmail({
+        heading: language === "en" ? "Your product order has been created" : "你的产品订单已建立",
+        intro:
+          language === "en"
+            ? "To reserve this item, please complete your bank transfer and upload the slip in your member dashboard."
+            : "若要保留这件产品，请完成银行转账，并到会员中心上传汇款单据。",
+        lines: [
+          `${language === "en" ? "Product" : "产品"}：${product.title}`,
+          `${language === "en" ? "Quantity" : "数量"}：${quantity}`,
+          `${language === "en" ? "Amount due" : "需汇款金额"}：${cashPaid.toFixed(2)} MYR`
+        ]
+      })
+    }).catch(() => null);
   }
 
   return NextResponse.json({

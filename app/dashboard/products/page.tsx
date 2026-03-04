@@ -16,7 +16,7 @@ export default async function DashboardProductsPage() {
   const language = await getCurrentLanguage();
   const supabase = await createClient();
 
-  const [{ data: products }, { data: orders }, activeAccounts] = await Promise.all([
+  const [{ data: products }, { data: orders }, activeAccounts, { data: profile }] = await Promise.all([
     supabase
       .from("products")
       .select("id,title,subtitle,description,price_myr,stock_on_hand,track_inventory,allow_backorder,is_published")
@@ -28,7 +28,8 @@ export default async function DashboardProductsPage() {
       .eq("user_id", user.id)
       .eq("order_type", "product")
       .order("created_at", { ascending: false }),
-    getActivePaymentAccounts(supabase)
+    getActivePaymentAccounts(supabase),
+    supabase.from("users_profile").select("points_balance").eq("id", user.id).single()
   ]);
 
   const accounts = activeAccounts.length ? activeAccounts : (buildFallbackPaymentAccount() ? [buildFallbackPaymentAccount()!] : []);
@@ -65,7 +66,7 @@ export default async function DashboardProductsPage() {
           {products?.length ? (
             <div className="space-y-4">
               {products.map((product) => (
-                <ProductOrderCard key={product.id} product={product} language={language} />
+                <ProductOrderCard key={product.id} product={product} language={language} pointsBalance={Number(profile?.points_balance ?? 0)} />
               ))}
             </div>
           ) : (
